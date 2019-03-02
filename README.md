@@ -2,11 +2,11 @@
 
 #### Compile
 
-    $ cc name.c -o name
+    $ cc name1.c name2.c -o nameX
 
 #### Run
 
-    $ ./name
+    $ ./nameX
 
 # Memory
 
