@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include "stack-with-array.h"
 
 StackArray * malloc_stack_array() {

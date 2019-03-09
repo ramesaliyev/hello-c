@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #ifndef LINKED_LIST /* Include guard */
 #define LINKED_LIST
 
