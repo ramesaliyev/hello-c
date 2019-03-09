@@ -233,7 +233,14 @@ const char * prompt_user_input_string(const char * prompt_string) {
 /**
  * Arithmetic Calculator implementation START
  */
-enum symbol {PAREN_OPEN = -100, PAREN_CLOSE = -101, MULTIPLY = -200, DIVIDE = -201, ADD = -300, SUBTRACT = -301};
+enum symbol {
+  PAREN_OPEN = -100,
+  PAREN_CLOSE = -101,
+  MULTIPLY = -200,
+  DIVIDE = -201,
+  ADD = -300,
+  SUBTRACT = -301
+};
 
 // Convert given token into known symbol.
 int get_symbol(char token) {
@@ -356,7 +363,7 @@ int * parse_tokens(const char * string) {
 }
 
 // Print stacks.
-void print_token_stacks(const char * name, Stack * stack) {
+void print_token_stack(const char * name, Stack * stack) {
   printf("%s Stack: ", name);
 
   StackNode * current_node = stack->top;
@@ -414,8 +421,8 @@ int calculate(const char * string_input, bool log) {
     int current_token = *tokens_cursor;
 
     if (log) {
-      print_token_stacks("Operands", operands);
-      print_token_stacks("Operators", operators);
+      print_token_stack("Operands", operands);
+      print_token_stack("Operators", operators);
       printf("-\n");
     }
 
@@ -456,8 +463,8 @@ int calculate(const char * string_input, bool log) {
           ));
 
           if (log) {
-            print_token_stacks("Operands", operands);
-            print_token_stacks("Operators", operators);
+            print_token_stack("Operands", operands);
+            print_token_stack("Operators", operators);
             printf("-\n");
           }
         }
@@ -477,8 +484,8 @@ int calculate(const char * string_input, bool log) {
   }
 
   if (log) {
-    print_token_stacks("Operands", operands);
-    print_token_stacks("Operators", operators);
+    print_token_stack("Operands", operands);
+    print_token_stack("Operators", operators);
     printf("-\n");
   }
 
@@ -490,8 +497,8 @@ int calculate(const char * string_input, bool log) {
     ));
 
     if (log) {
-      print_token_stacks("Operands", operands);
-      print_token_stacks("Operators", operators);
+      print_token_stack("Operands", operands);
+      print_token_stack("Operators", operators);
       printf("-\n");
     }
   }
@@ -524,25 +531,17 @@ int program(const char * input_string) {
 }
 
 int test() {
-  const int size = 11;
-
-  const char * expressions[size] = {
-    "1",
-    "(1)",
-    "(0/3)",
-    "1 +  3",
+  const char * expressions[5] = {
+    "12 * (4 + 3 - 16 / 8) - 5",
     "8 + 2 * (21 / (7 - 4) + 2)",
     "5 + 3 * 10 / 6 - 2",
     "(12 + 4 - 3) * (7 * 2 + 5)",
-    "21 / ((4 + 8) * 2 - 17)",
-    "12+(5+6)-9*8+45+(930)-6*90",
-    "(6+9)-9876+8*908+23109",
-    "7+2/8+(0+9)+6/4987",
+    "21 / ((4 + 8) * 2 - 17)"
   };
 
-  int results[size] = {1, 1, 0, 4, 26, 8, 247, 3, 386, 20512, 16};
+  int results[5] = {55, 26, 8, 247, 3};
 
-  for (int i = 0; i < size; i++) {
+  for (int i = 0; i < 5; i++) {
     const char * expression = expressions[i];
     int correct_result = results[i];
     int result = calculate(expression, false);
@@ -565,5 +564,7 @@ int test() {
  */
 int main(int argc, char **argv) {
   const char * input_string = get_program_input_string(argc, argv);
-  return strcmp(input_string, "test") == 0 ? test() : program(input_string);
+
+  return input_string != NULL && strcmp(input_string, "test") == 0 ?
+    test() : program(input_string);
 }
