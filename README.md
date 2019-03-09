@@ -41,6 +41,77 @@
 
 - Arrays have strict ordering in memory, so you can later on use pointers and simple arithmetic to walk up and down an array to access data.
 
+# Memory Allocation
+
+### malloc
+The name "**malloc**" stands for memory allocation. The malloc() function reserves a block of memory of the specified number of bytes. And, it returns a pointer of type void which can be casted into pointer of any form.
+
+    // syntax
+    data_type* pointer_variable_name;
+    pointer_variable_name = (data_type *) malloc(byte-size);
+
+    // example
+    int * pointer;
+    pointer = (int *) malloc(100 * sizeof(int));
+
+Considering the size of int is 4 bytes, this statement allocates 400 bytes of memory. And, the pointer ptr holds the address of the first byte in the allocated memory.
+
+However, if the space is insufficient, allocation fails and returns a NULL pointer.
+
+### calloc
+
+The name "**calloc**" stands for contiguous allocation. The malloc() function allocates a single block of memory. Whereas, calloc() allocates multiple blocks of memory and initializes them to zero.
+
+    // syntax
+    data_type* pointer_variable_name;
+    pointer_variable_name = (data_type *) calloc(n, element-size);
+
+    // example
+    int * pointer;
+    pointer = (int *) calloc(100, sizeof(int));
+
+### realloc
+**realloc** attempts to extend your available memory range if sufficient memory is available behind it on the heap. If not then it is equivalent to malloc a block of the new size, memcpy your contents there, free the old block. [*](https://stackoverflow.com/a/21437523)
+
+> An implementation of realloc() may look something like the following: [*](https://stackoverflow.com/a/21438998)
+
+    void * realloc(void *ptr, size_t size) {
+        // realloc() on a NULL pointer is the same as malloc().
+        if (ptr == NULL) return malloc(size);
+
+        size_t oldsize = malloc_getsize(ptr);
+
+        // Are we shrinking an allocation? That's easy.
+        if (size < oldsize) {
+            malloc_setsize(ptr, size);
+            return ptr;
+        }
+
+        // Can we grow this allocation in place?
+        if (malloc_can_grow(ptr, size)) {
+            malloc_setsize(ptr, size);
+            return ptr;
+        }
+
+        // Create a new allocation, move the data there, and free the old one.
+        void * newptr = malloc(size);
+        if (newptr == NULL) return NULL;
+        memcpy(newptr, ptr, oldsize);
+        free(ptr);
+
+        return newptr;
+    }
+> Note that I'm calling several functions with names starting with malloc_ here. These functions don't actually exist (to the best of my knowledge) in any implementation; they're intended as placeholders for however the allocator actually performs these tasks internally.
+
+> Since the implementation of realloc() depends on these internal tools, its implementation is OS-dependent. However, the realloc() interface is universal.
+
+### free
+
+Dynamically allocated memory created with either calloc(), malloc(), realloc() doesn't get freed on their own. You must explicitly use free() to release the space.
+
+    // example
+    free(pointer);
+
 # Pointers
 
 - If you have a variable var in your program, *&var* will give you its address in the memory, where **&** is commonly called the **reference operator**.
@@ -116,3 +187,4 @@ A storage class defines the scope (visibility) and life-time of variables and/or
 - https://www.programiz.com/c-programming/c-pointers
 - https://overiq.com/c-programming-101/pointer-arithmetic-in-c/
 - https://fresh2refresh.com/c-programming/c-pointer/
+- https://www.programiz.com/c-programming/c-dynamic-memory-allocation
