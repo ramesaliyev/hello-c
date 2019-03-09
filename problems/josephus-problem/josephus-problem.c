@@ -1,4 +1,4 @@
-#include "linked-list.h"
+#include "../../data-structures/linked-list/linked-list.h"
 
 int main(int argc, char **argv) {
   int N = 9;
