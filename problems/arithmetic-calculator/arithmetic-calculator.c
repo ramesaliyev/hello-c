@@ -386,7 +386,7 @@ void print_tokens(int * tokens) {
 }
 
 // Apply an operator to two numbers.
-int apply_operator(int operator, int a, int b) {
+int apply_operator(int operator, int b, int a) {
   switch (operator) {
     case MULTIPLY: return a * b;
     case DIVIDE: return a / b;
@@ -428,13 +428,12 @@ int calculate(const char * string_input, bool log) {
 
       case PAREN_CLOSE: {
         int operator;
-
         while((operator = pop_stack(operators)) != PAREN_OPEN) {
-          int b = pop_stack(operands);
-          int a = pop_stack(operands);
-          int result = apply_operator(operator, a, b);
-
-          push_stack(operands, result);
+          push_stack(operands, apply_operator(
+            operator,
+            pop_stack(operands),
+            pop_stack(operands)
+          ));
         }
 
         break;
@@ -444,47 +443,26 @@ int calculate(const char * string_input, bool log) {
       case DIVIDE:
       case ADD:
       case SUBTRACT: {
-        int has_operators = !is_stack_empty(operators);
+        // While priority of peak operator is
+        // greater than or equal to current operator.
+        while (
+          !is_stack_empty(operators) && peek_stack(operators) != PAREN_OPEN &&
+          get_symbol_equality(peek_stack(operators), current_token) >= 0
+        ) {
+          push_stack(operands, apply_operator(
+            pop_stack(operators),
+            pop_stack(operands),
+            pop_stack(operands)
+          ));
 
-        if (has_operators) {
-          int peak_operator = peek_stack(operators);
-          int symbol_equality = get_symbol_equality(peak_operator, current_token);
-
-          if (peak_operator == PAREN_OPEN) {
-            push_stack(operators, current_token);
-          } else if (symbol_equality == -1) { // peak operator is less prior.
-            push_stack(operators, current_token);
-          } else if (symbol_equality >= 0) { // peak operator is prior or equal.
-            bool stack_has_operators = !is_stack_empty(operators);
-            bool peak_operator_isnt_paren = peak_operator != PAREN_OPEN && peak_operator != PAREN_CLOSE;
-
-            // While there are prior or equal operators.
-            while (stack_has_operators && peak_operator_isnt_paren && symbol_equality >= 0) {
-              int top_operator = pop_stack(operators);
-
-              int b = pop_stack(operands);
-              int a = pop_stack(operands);
-              int result = apply_operator(top_operator, a, b);
-              push_stack(operands, result);
-
-              peak_operator = peek_stack(operators);
-              symbol_equality = get_symbol_equality(peak_operator, current_token);
-              stack_has_operators = !is_stack_empty(operators);
-              peak_operator_isnt_paren = peak_operator != PAREN_OPEN && peak_operator != PAREN_CLOSE;
-
-              if (log) {
-                print_token_stacks("Operands", operands);
-                print_token_stacks("Operators", operators);
-                printf("-\n");
-              }
-            }
-
-            push_stack(operators, current_token);
+          if (log) {
+            print_token_stacks("Operands", operands);
+            print_token_stacks("Operators", operators);
+            printf("-\n");
           }
-        } else {
-          push_stack(operators, current_token);
         }
 
+        push_stack(operators, current_token);
         break;
       }
 
@@ -493,7 +471,6 @@ int calculate(const char * string_input, bool log) {
         push_stack(operands, current_token);
         break;
       }
-
     }
 
     tokens_cursor++;
@@ -506,11 +483,11 @@ int calculate(const char * string_input, bool log) {
   }
 
   while (!is_stack_empty(operators)) {
-    int operator = pop_stack(operators);
-    int b = pop_stack(operands);
-    int a = pop_stack(operands);
-    int result = apply_operator(operator, a, b);
-    push_stack(operands, result);
+    push_stack(operands, apply_operator(
+      pop_stack(operators),
+      pop_stack(operands),
+      pop_stack(operands)
+    ));
 
     if (log) {
       print_token_stacks("Operands", operands);
