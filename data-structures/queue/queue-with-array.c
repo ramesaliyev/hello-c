@@ -52,8 +52,16 @@ void print_queue_array(QueueArray * queue) {
   if (is_queue_array_empty(queue)) {
     printf("Queue is empty.\n");
   } else {
-    for (int i = queue->front; i <= queue->rear; i = (i + 1) % queue->size) {
+    int i = queue->front;
+    bool print_loop = true;
+    while (print_loop) {
       printf("%d\n", queue->data[i]);
+
+      if (i == queue->rear) {
+        print_loop = false;
+      }
+
+      i = (i + 1) % queue->size;
     }
   }
   printf("\n");
