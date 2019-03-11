@@ -126,7 +126,7 @@ void print_stack(Stack *stack) {
  */
 // Remove empty spaces from given string.
 const char * remove_empty_spaces(const char * string) {
-  char * new_string = (char *) malloc(strlen(string) * sizeof(char));
+  char * new_string = (char *) calloc(strlen(string), sizeof(char));
 
   char * string_cursor = (char *) string;
   char * new_string_cursor = new_string;
@@ -155,7 +155,9 @@ const char * get_program_input_string(int argc, char **argv) {
   }
 
   int input_size = 0;
-  for (int i = 1; i < argc; i++) {
+
+  int i;
+  for (i = 1; i < argc; i++) {
     input_size += strlen(argv[i]);
     if (i + 1 < argc) {
       input_size++;
@@ -171,7 +173,8 @@ const char * get_program_input_string(int argc, char **argv) {
 
   input_string[0] = '\0';
 
-  for (int j = 1; j < argc; j++) {
+  int j;
+  for (j = 1; j < argc; j++) {
     strcat(input_string, argv[j]);
     if (j + 1 < argc) {
       strcat(input_string, " ");
@@ -234,7 +237,7 @@ const char * prompt_user_input_string(const char * prompt_string) {
  * Arithmetic Calculator implementation START
  */
 enum symbol {
-  DOT = -1,
+  DOT = -10,
   PAREN_OPEN = -100,
   PAREN_CLOSE = -101,
   MULTIPLY = -200,
@@ -288,7 +291,7 @@ float * parse_tokens(const char * string) {
   int max_decimal_digits = 100;
   int max_token = 20;
 
-  float * tokens = (float *) malloc(max_token * sizeof(float));
+  float * tokens = (float *) calloc(max_token, sizeof(float));
   float * tokens_cursor = tokens;
   int remained_token = max_token;
 
@@ -299,7 +302,7 @@ float * parse_tokens(const char * string) {
   char * string_cursor = (char *) string;
 
   // Maximum allowed number of decimal digits is 100.
-  char * current_token = (char *) malloc(max_decimal_digits * sizeof(char));
+  char * current_token = (char *) calloc(max_decimal_digits, sizeof(char));
   char * current_token_cursor = current_token;
 
   if (current_token == NULL) {
@@ -446,12 +449,10 @@ float calculate(const char * string_input, bool log) {
       case PAREN_CLOSE: {
         int operator;
         while((operator = pop_stack(operators)) != PAREN_OPEN) {
-          push_stack(operands, apply_operator(
-            operator,
-            pop_stack(operands),
-            pop_stack(operands),
-            log
-          ));
+          float num_b = pop_stack(operands);
+          float num_a = pop_stack(operands);
+          float result = apply_operator(operator, num_b, num_a, log);
+          push_stack(operands, result);
         }
 
         break;
@@ -467,12 +468,11 @@ float calculate(const char * string_input, bool log) {
           !is_stack_empty(operators) && peek_stack(operators) != PAREN_OPEN &&
           get_symbol_equality(peek_stack(operators), current_token) >= 0
         ) {
-          push_stack(operands, apply_operator(
-            pop_stack(operators),
-            pop_stack(operands),
-            pop_stack(operands),
-            log
-          ));
+          float num_b = pop_stack(operands);
+          float num_a = pop_stack(operands);
+          float operator = pop_stack(operators);
+          float result = apply_operator(operator, num_b, num_a, log);
+          push_stack(operands, result);
 
           if (log) {
             print_token_stack("Operands", operands);
@@ -502,12 +502,11 @@ float calculate(const char * string_input, bool log) {
   }
 
   while (!is_stack_empty(operators)) {
-    push_stack(operands, apply_operator(
-      pop_stack(operators),
-      pop_stack(operands),
-      pop_stack(operands),
-      log
-    ));
+    float num_b = pop_stack(operands);
+    float num_a = pop_stack(operands);
+    float operator = pop_stack(operators);
+    float result = apply_operator(operator, num_b, num_a, log);
+    push_stack(operands, result);
 
     if (log) {
       print_token_stack("Operands", operands);
@@ -554,7 +553,8 @@ int test() {
 
   int results[5] = {55, 26, 8, 247, 3};
 
-  for (int i = 0; i < 5; i++) {
+  int i;
+  for (i = 0; i < 5; i++) {
     const char * expression = expressions[i];
     int correct_result = results[i];
     float result = calculate(expression, false);
