@@ -63,7 +63,7 @@ float pop_stack(Stack * stack) {
     stack->top = top->next;
     stack->counter--;
 
-    int data = top->data;
+    float data = top->data;
     free(top);
     return data;
   }
@@ -234,6 +234,7 @@ const char * prompt_user_input_string(const char * prompt_string) {
  * Arithmetic Calculator implementation START
  */
 enum symbol {
+  DOT = -1,
   PAREN_OPEN = -100,
   PAREN_CLOSE = -101,
   MULTIPLY = -200,
@@ -251,6 +252,7 @@ int get_symbol(char token) {
     case '/': return DIVIDE;
     case '+': return ADD;
     case '-': return SUBTRACT;
+    case '.': return DOT;
     default : return token - '0'; // convert to integer.
   }
 }
@@ -259,6 +261,7 @@ int get_symbol(char token) {
 // Works only for known symbols, wont work for integers.
 char get_symbol_itself(int symbol) {
   switch (symbol) {
+    case DOT: return '.';
     case PAREN_OPEN: return '(';
     case PAREN_CLOSE: return ')';
     case MULTIPLY: return '*';
@@ -326,10 +329,13 @@ float * parse_tokens(const char * string) {
     if (current_symbol >= 0) {
       *(current_token_cursor) = current_symbol + '0'; // convert to char
       current_token_cursor++;
+    } else if (current_symbol == DOT) { // dot
+      *(current_token_cursor) = get_symbol_itself(DOT); // convert to char
+      current_token_cursor++;
     } else {
       // First convert current_token to int and add tokens (if not empty).
       if (current_token != current_token_cursor) {
-        *(tokens) = atoi(current_token);
+        *(tokens) = atof(current_token);
         tokens++;
         remained_token--;
 
@@ -353,7 +359,7 @@ float * parse_tokens(const char * string) {
   }
 
   if (current_token != current_token_cursor) {
-    *(tokens) = atoi(current_token);
+    *(tokens) = atof(current_token);
     tokens++;
   }
 
@@ -551,10 +557,10 @@ int test() {
   for (int i = 0; i < 5; i++) {
     const char * expression = expressions[i];
     int correct_result = results[i];
-    int result = calculate(expression, false);
+    float result = calculate(expression, false);
 
     printf(
-      "%-30s should be equal %-10d result is %-10d -> %s \n",
+      "%-30s should be equal %-10d result is %-10.2f -> %s \n",
       expression, correct_result, result,
       result == correct_result ? "success" : "error"
     );
