@@ -394,6 +394,7 @@ void print_tokens(int * tokens) {
 
 // Apply an operator to two numbers.
 int apply_operator(int operator, int b, int a) {
+  printf("Calculating: %i %c %i \n", a, get_symbol_itself(operator), b);
   switch (operator) {
     case MULTIPLY: return a * b;
     case DIVIDE: return a / b;
