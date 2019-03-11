@@ -7,7 +7,7 @@
  * Stack Implementation START
  */
 typedef struct stack_node {
-  int data;
+  float data;
   struct stack_node *next;
 } StackNode;
 
@@ -48,7 +48,7 @@ bool is_stack_full(Stack * stack) {
 }
 
 // Peek top item of stack without popping it.
-int peek_stack(Stack * stack) {
+float peek_stack(Stack * stack) {
   if (!is_stack_empty(stack)) {
     return stack->top->data;
   }
@@ -57,7 +57,7 @@ int peek_stack(Stack * stack) {
 }
 
 // Pop top item of stack.
-int pop_stack(Stack * stack) {
+float pop_stack(Stack * stack) {
   if (!is_stack_empty(stack)) {
     StackNode * top = stack->top;
     stack->top = top->next;
@@ -72,7 +72,7 @@ int pop_stack(Stack * stack) {
 }
 
 // Push item on top of the stack.
-void push_stack(Stack * stack, int data) {
+void push_stack(Stack * stack, float data) {
   if (!is_stack_full(stack)) {
     StackNode * new_node = malloc_stack_node();
     new_node->next = NULL;
@@ -112,7 +112,7 @@ void print_stack(Stack *stack) {
     printf("Stack is empty.\n");
   } else {
     while (current_node != NULL) {
-      printf("%d\n", current_node->data);
+      printf("%.2f\n", current_node->data);
       current_node = current_node->next;
     }
   }
@@ -281,12 +281,12 @@ int get_symbol_equality(int symbol_a, int symbol_b) {
 }
 
 // Parse and convert a string into meaningful tokens.
-int * parse_tokens(const char * string) {
+float * parse_tokens(const char * string) {
   int max_decimal_digits = 100;
   int max_token = 20;
 
-  int * tokens = (int *) malloc(max_token * sizeof(int));
-  int * tokens_cursor = tokens;
+  float * tokens = (float *) malloc(max_token * sizeof(float));
+  float * tokens_cursor = tokens;
   int remained_token = max_token;
 
   if (tokens == NULL) {
@@ -305,12 +305,12 @@ int * parse_tokens(const char * string) {
 
   char current_char;
   while ((current_char = *(string_cursor)) != '\0') {
-    int current_symbol = get_symbol(current_char);
+    float current_symbol = get_symbol(current_char);
 
     if (remained_token <= 2) {
       remained_token = max_token;
       max_token *= 2;
-      int * new_tokens = (int *) realloc(tokens_cursor, max_token);
+      float * new_tokens = (float *) realloc(tokens_cursor, max_token);
 
       if (new_tokens == NULL) {
         free(tokens);
@@ -372,8 +372,8 @@ void print_token_stack(const char * name, Stack * stack) {
     printf("Empty.");
   } else {
     while (current_node != NULL) {
-      int token = current_node->data;
-      token >= 0 ? printf("%d ", token) : printf("%c ", get_symbol_itself(token));
+      float token = current_node->data;
+      token >= 0 ? printf("%.2f ", token) : printf("%c ", get_symbol_itself(token));
       current_node = current_node->next;
     }
   }
@@ -381,20 +381,23 @@ void print_token_stack(const char * name, Stack * stack) {
 }
 
 // Print tokens.
-void print_tokens(int * tokens) {
+void print_tokens(float * tokens) {
   printf("Parsed Tokens: ");
-  int * tokens_print_cursor = tokens;
+  float * tokens_print_cursor = tokens;
   while(*tokens_print_cursor != -1) {
-    int token = *tokens_print_cursor;
-    token >= 0 ? printf("%d ", token) : printf("%c ", get_symbol_itself(token));
+    float token = *tokens_print_cursor;
+    token >= 0 ? printf("%.2f ", token) : printf("%c ", get_symbol_itself(token));
     tokens_print_cursor++;
   }
   printf("\n");
 }
 
 // Apply an operator to two numbers.
-int apply_operator(int operator, int b, int a) {
-  printf("Calculating: %i %c %i \n", a, get_symbol_itself(operator), b);
+float apply_operator(int operator, float b, float a, bool log) {
+  if (log) {
+    printf("Calculating: %.2f %c %.2f \n", a, get_symbol_itself(operator), b);
+  }
+
   switch (operator) {
     case MULTIPLY: return a * b;
     case DIVIDE: return a / b;
@@ -405,9 +408,9 @@ int apply_operator(int operator, int b, int a) {
 }
 
 // Do arithmetic calculation over a given string.
-int calculate(const char * string_input, bool log) {
-  int * tokens = parse_tokens(remove_empty_spaces(string_input));
-  int * tokens_cursor = tokens;
+float calculate(const char * string_input, bool log) {
+  float * tokens = parse_tokens(remove_empty_spaces(string_input));
+  float * tokens_cursor = tokens;
 
   if (log) {
     print_tokens(tokens);
@@ -419,7 +422,7 @@ int calculate(const char * string_input, bool log) {
 
   // End of tokens marked as -1.
   while (*tokens_cursor != -1) {
-    int current_token = *tokens_cursor;
+    float current_token = *tokens_cursor;
 
     if (log) {
       print_token_stack("Operands", operands);
@@ -428,7 +431,7 @@ int calculate(const char * string_input, bool log) {
     }
 
     // Token is an operator.
-    switch (current_token) {
+    switch ((int) current_token) {
       case PAREN_OPEN: {
         push_stack(operators, current_token);
         break;
@@ -440,7 +443,8 @@ int calculate(const char * string_input, bool log) {
           push_stack(operands, apply_operator(
             operator,
             pop_stack(operands),
-            pop_stack(operands)
+            pop_stack(operands),
+            log
           ));
         }
 
@@ -460,7 +464,8 @@ int calculate(const char * string_input, bool log) {
           push_stack(operands, apply_operator(
             pop_stack(operators),
             pop_stack(operands),
-            pop_stack(operands)
+            pop_stack(operands),
+            log
           ));
 
           if (log) {
@@ -494,7 +499,8 @@ int calculate(const char * string_input, bool log) {
     push_stack(operands, apply_operator(
       pop_stack(operators),
       pop_stack(operands),
-      pop_stack(operands)
+      pop_stack(operands),
+      log
     ));
 
     if (log) {
@@ -504,7 +510,7 @@ int calculate(const char * string_input, bool log) {
     }
   }
 
-  int result = pop_stack(operands);
+  float result = pop_stack(operands);
 
   destroy_stack(operands);
   destroy_stack(operators);
@@ -522,7 +528,7 @@ int program(const char * input_string) {
   while (true) {
     if (input_string != NULL) {
       printf("User Input: %s\n", input_string);
-      printf("Result: %d\n", calculate(input_string, true));
+      printf("Result: %.2f\n", calculate(input_string, true));
       printf("\n");
     }
     input_string = prompt_user_input_string("Enter new math expression:");
