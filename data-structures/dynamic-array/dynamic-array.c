@@ -33,6 +33,21 @@ int get_array(Array * array, int index) {
   return array->array[index];
 }
 
+void set_array(Array * array, int index, int value) {
+  array->array[index] = value;
+}
+
+int pop_array(Array * array) {
+  if (array->used == array->size / 2) {
+    array->size = array->used;
+    array->array = (int *) realloc(array->array, array->size * sizeof(int));
+  }
+
+  array->used--;
+
+  return array->array[array->used + 1];
+}
+
 void swap_array(Array * array, int index_a, int index_b) {
   int tmp = array->array[index_a];
   array->array[index_a] = array->array[index_b];
@@ -46,9 +61,8 @@ void free_array(Array * array) {
 }
 
 void print_array(Array * array) {
-  int i;
   printf("Array, used/size %zu/%zu: Items: {", array->used, array->size);
-  for (i = 0; i < array->used; i++) {
+  for (int i = 0; i < array->used; i++) {
     printf("%d", array->array[i]);
     if (i != array->used - 1) printf(", ");
   }

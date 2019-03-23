@@ -19,6 +19,10 @@ void insert_array(Array * array, int element);
 
 int get_array(Array * array, int index);
 
+void set_array(Array * array, int index, int value);
+
+int pop_array(Array * array);
+
 void swap_array(Array * array, int index_a, int index_b);
 
 void free_array(Array * array);
