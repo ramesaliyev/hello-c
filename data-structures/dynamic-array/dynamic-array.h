@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef DYNAMIC_ARRAY /* Include guard */
+#define DYNAMIC_ARRAY
+
 typedef struct {
   int *array;
   size_t used;
@@ -21,3 +24,5 @@ void swap_array(Array * array, int index_a, int index_b);
 void free_array(Array * array);
 
 void print_array(Array * array);
+
+#endif
