@@ -11,6 +11,7 @@ typedef struct Matrix {
 
 void print_matrix(Matrix* mat);
 
+// arr[0] is actually syntactic shorthand for *(arr+0)
 // *(*(C->data + i) + j) IS EQUAL TO C->data[i][j]
 // We are using former version to get better understanding.
 
@@ -171,6 +172,14 @@ int main() {
   int arr5[] = {22,28,49,64};
   printf("Should say yes: %d\n", are_matrices_equal(matrix_from_array(arr4, 4, 2), matrix_from_array(arr4, 4, 2)));
   printf("Should say no: %d\n", are_matrices_equal(matrix_from_array(arr4, 4, 2), matrix_from_array(arr5, 4, 2)));
+
+  free(mat1);
+  free(mat2);
+  free(mat3);
+  free(mat4);
+  free(mat5);
+  free(mat_sum12);
+  free(mat_mul34);
 
   return 1;
 }

@@ -74,5 +74,7 @@ int main() {
     printf("\n");
   }
 
+  free(store);
+
   return 1;
 }
