@@ -2,7 +2,11 @@
 
 #### Compile
 
-    $ cc name1.c name2.c -o nameX
+    $ gcc name1.c name2.c -o nameX
+
+for ANSI C;
+
+    $ gcc name1.c name2.c -std=c99 -pedantic -o nameX
 
 #### Run
 
