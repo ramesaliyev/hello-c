@@ -8,5 +8,5 @@ int main() {
     printf("%c\n", *p++);
   }
 
-  return 1;
+  return 0;
 }

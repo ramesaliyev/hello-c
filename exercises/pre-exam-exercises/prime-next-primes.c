@@ -82,5 +82,5 @@ int main() {
   
   free(nextNPrimes);
 
-  return 1;
+  return 0;
 }

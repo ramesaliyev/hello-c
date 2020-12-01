@@ -72,7 +72,7 @@ int main() {
   printf("Height:%d\n", height(tree));
   printf("Diameter:%d\n", diameter(tree));
 
-  return 1;
+  return 0;
 }
 
 /*

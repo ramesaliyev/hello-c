@@ -29,5 +29,5 @@ int main() {
   printf("Is 7854 perfect? %d \n", isPerfectNumber(7854));
   printf("Is 8128 perfect? %d \n", isPerfectNumber(8128));
 
-  return 1;
+  return 0;
 }

@@ -38,5 +38,5 @@ int main() {
   printf("\n");
   free(merged);
 
-  return 1;
+  return 0;
 }

@@ -3,5 +3,5 @@
 
 int main() {
   printf("IT IS WEDNESDAY %s\n", WEDNESDAY);
-  return 1;
+  return 0;
 }

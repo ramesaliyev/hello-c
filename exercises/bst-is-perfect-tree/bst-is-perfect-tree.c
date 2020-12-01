@@ -63,7 +63,7 @@ int main() {
   int isAligned = isPerfectTree(tree, 0);
   isAligned == -1 ? printf("Not aligned.\n") : printf("Aligned.\n");
 
-  return 1;
+  return 0;
 }
 
 /*

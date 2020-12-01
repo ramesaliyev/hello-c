@@ -17,5 +17,5 @@ int main() {
 
   printf("a=%d, b=%d \n", a, b);
 
-  return 1;
+  return 0;
 }

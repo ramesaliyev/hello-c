@@ -46,5 +46,5 @@ int main() {
 
   free(withdraw);
 
-  return 1;
+  return 0;
 }

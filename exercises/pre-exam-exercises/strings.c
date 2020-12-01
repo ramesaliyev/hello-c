@@ -10,5 +10,5 @@ int main() {
   printf("%s\n", str1);
   printf("%s\n", str2);
 
-  return 1;
+  return 0;
 }

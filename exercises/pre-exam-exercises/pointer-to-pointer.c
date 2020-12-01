@@ -18,5 +18,5 @@ int main() {
   ***z = 5;
   printf("%d %d %d %d %d\n", r, *p, *t, **q, ***z);
 
-  return 1;
+  return 0;
 }

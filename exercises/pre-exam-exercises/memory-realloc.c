@@ -76,5 +76,5 @@ int main() {
 
   free(store);
 
-  return 1;
+  return 0;
 }

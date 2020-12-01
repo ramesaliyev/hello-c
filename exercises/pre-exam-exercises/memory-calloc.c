@@ -21,5 +21,5 @@ int main() {
 
   free(p_arr);
 
-  return 1;
+  return 0;
 }

@@ -12,5 +12,5 @@ int main() {
 
   free(int_p);
 
-  return 1;
+  return 0;
 }

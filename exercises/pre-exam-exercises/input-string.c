@@ -69,5 +69,5 @@ int main() {
 
   free(text);
 
-  return 1;
+  return 0;
 }

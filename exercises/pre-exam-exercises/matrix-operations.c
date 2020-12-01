@@ -181,5 +181,5 @@ int main() {
   free(mat_sum12);
   free(mat_mul34);
 
-  return 1;
+  return 0;
 }

@@ -27,5 +27,5 @@ int main() {
   // will print 9
   printf("**pp = %d \n", **pp);
 
-  return 1;
+  return 0;
 }

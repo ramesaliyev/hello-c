@@ -44,5 +44,5 @@ int main() {
 
   free(mat);
 
-  return 1;
+  return 0;
 }

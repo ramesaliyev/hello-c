@@ -13,5 +13,5 @@ int main() {
   printf("%d\n", *(++p + 1));
   printf("%d\n", *(++p));
 
-  return 1;
+  return 0;
 }

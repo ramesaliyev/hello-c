@@ -78,6 +78,10 @@ void print_list(Node* head) {
   printf("\n");
 }
 
+// delete_node
+// find_node (return pointer of node)
+// another linked list example for employee (findById, findByName, deleteNode, deleteById)
+
 int main() {
   Node* head = create_node(0);
   insert_next(head, 1);
@@ -92,5 +96,5 @@ int main() {
   
   free_list(head);
 
-  return 1;
+  return 0;
 }
