@@ -1,0 +1,10 @@
+1,Ahmet,Elbir,Dr
+2,Banu,Diri,Prof
+3,Erkan,Uslu,Dr
+4,Ferkan,Yilmaz,Dr
+5,Furkan,Cakmak,Dr
+6,Gokhan,Bilgin,Doc Dr
+7,Goksel,Biricik,Dr
+8,Mustafa Fatih,Amasyali,Doc Dr
+9,Yonca,Turgut Sezer,Doc Dr
+10,Yunus Emre,Selcuk,Dr

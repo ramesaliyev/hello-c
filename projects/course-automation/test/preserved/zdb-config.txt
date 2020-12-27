@@ -1,0 +1,3 @@
+Max Courses,5
+Max Credits,15
+Setup Completed,1

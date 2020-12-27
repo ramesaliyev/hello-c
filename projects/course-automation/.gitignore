@@ -1,0 +1,5 @@
+build
+*.txt
+*.exe
+
+!test/preserved/*.txt

@@ -1,0 +1,10 @@
+1,1,BLM2041,Signals and Systems,3,3,1
+2,10,BLM2031,Structured Programming,3,3,2
+3,5,BLM2035,Data Communication,5,2,3
+4,6,BLM2611,Logic Circuits,3,4,4
+5,3,BLM2021,Low Level Programming,3,3,5
+6,2,BLM1022,Numerical Analysis,2,4,5
+7,1,BLM2521,Discrete Math,3,3,5
+8,4,BLM2011,Probability,3,3,5
+9,9,MAT1320,Lineer Cebir,1,2,5
+10,4,BLM2502,Theory of Computation,6,4,4
