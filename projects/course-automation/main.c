@@ -235,7 +235,7 @@ int promptIntWith(char* ask, int inputSize, int defval, int searchInt, Predicate
 
 void pressEnterToSeeMenu() {
   printf("Press enter to see menu...\n");  
-  free(scanRaw(1));
+  free(scanRaw(2));
 }
 
 Columns* parse(char* str) {
