@@ -319,7 +319,7 @@ IdList* filterIdList(IdList* idList, int searchInt, PredicateInt predicate) {
  * Common data structure operations.
  */
 void freeDynamicArray(void* data) {
-  DynamicArray* darray = data;
+  DynamicArray* darray = (DynamicArray*) data;
   int i;
   for (i = 0; i < darray->length; i++) {
     free(darray->array[i]);
@@ -691,7 +691,7 @@ void* columnsToLecturer(Columns* columns) {
 }
 
 char* lecturerToLine(void* data) {
-  Lecturer* lecturer = data;
+  Lecturer* lecturer = (Lecturer*) data;
   char* line = mallocstr(LINESIZE);
   sprintf(
     line,
@@ -706,7 +706,7 @@ char* lecturerToLine(void* data) {
 }
 
 void freeLecturer(void* data) {
-  Lecturer* lecturer = data;
+  Lecturer* lecturer = (Lecturer*) data;
   free(lecturer->name);
   free(lecturer->surname);
   free(lecturer->title);
@@ -714,11 +714,11 @@ void freeLecturer(void* data) {
 }
 
 Lecturer* findLecturerByColumn(int column, char* match) {
-  return findCastRecordByColumn(FILE_LECTURERS, column, match, columnsToLecturer);
+  return (Lecturer*) findCastRecordByColumn(FILE_LECTURERS, column, match, columnsToLecturer);
 }
 
 Lecturer* findLecturerByIntColumn(int column, int match) {
-  return findCastRecordByIntColumn(FILE_LECTURERS, column, match, columnsToLecturer);
+  return (Lecturer*) findCastRecordByIntColumn(FILE_LECTURERS, column, match, columnsToLecturer);
 }
 
 Lecturer* findLecturerById(int id) {
@@ -766,7 +766,7 @@ char* buildFullLecturerInfo(Lecturer* lecturer) {
 }
 
 void lecturerLister(Columns* columns, bool head) {
-  Lecturer* lecturer = columnsToLecturer(columns);
+  Lecturer* lecturer = (Lecturer*) columnsToLecturer(columns);
   
   if (head) {
     printSeparator(53);
@@ -884,7 +884,7 @@ void* columnsToStudent(Columns* columns) {
 }
 
 char* studentToLine(void* data) {
-  Student* student = data;
+  Student* student = (Student*) data;
   char* line = mallocstr(LINESIZE);
   sprintf(
     line,
@@ -902,7 +902,7 @@ char* studentToLine(void* data) {
 }
 
 void freeStudent(void* data) {
-  Student* student = data;
+  Student* student = (Student*) data;
   free(student->number);
   free(student->name);
   free(student->surname);
@@ -910,19 +910,19 @@ void freeStudent(void* data) {
 }
 
 Student* findStudentByColumn(int column, char* match) {
-  return findCastRecordByColumn(FILE_STUDENTS, column, match, columnsToStudent);
+  return (Student*) findCastRecordByColumn(FILE_STUDENTS, column, match, columnsToStudent);
 }
 
 Student* findStudentByIntColumn(int column, int match) {
-  return findCastRecordByIntColumn(FILE_STUDENTS, column, match, columnsToStudent);
+  return (Student*) findCastRecordByIntColumn(FILE_STUDENTS, column, match, columnsToStudent);
 }
 
 Student* findStudentById(int id) {
-  return findStudentByIntColumn(0, id);
+  return (Student*) findStudentByIntColumn(0, id);
 }
 
 Student* findStudentByNumber(char* number) {
-  return findStudentByColumn(1, number);
+  return (Student*) findStudentByColumn(1, number);
 }
 
 void updateStudentById(int id, Student* student) {
@@ -956,7 +956,7 @@ bool studentExistanceByNumberTester(char* studentNumber, char* searchStr) {
 }
 
 void studentLister(Columns* columns, bool head) {
-  Student* student = columnsToStudent(columns);
+  Student* student = (Student*) columnsToStudent(columns);
   
   if (head) {
     printSeparator(101);
@@ -1087,13 +1087,13 @@ void* columnsToEnrollment(Columns* columns) {
   enrollment->studentId = atoi(columns->array[1]);
   enrollment->courseId = atoi(columns->array[2]);
   enrollment->date = copystr(columns->array[3]);
-  enrollment->state = atoi(columns->array[4]);
+  enrollment->state = (EnrollmentState) atoi(columns->array[4]);
 
   return enrollment;
 }
 
 char* enrollmentToLine(void* data) {
-  Enrollment* enrollment = data;
+  Enrollment* enrollment = (Enrollment*) data;
   char* line = mallocstr(LINESIZE);
   sprintf(
     line,
@@ -1109,25 +1109,25 @@ char* enrollmentToLine(void* data) {
 }
 
 void freeEnrollment(void* data) {
-  Enrollment* enrollment = data;
+  Enrollment* enrollment = (Enrollment*) data;
   free(enrollment->date);
   free(enrollment);
 }
 
 Enrollment* findEnrollmentByColumn(int column, char* match) {
-  return findCastRecordByColumn(FILE_ENROLLMENTS, column, match, columnsToEnrollment);
+  return (Enrollment*) findCastRecordByColumn(FILE_ENROLLMENTS, column, match, columnsToEnrollment);
 }
 
 Enrollment* findEnrollmentByIntColumn(int column, int match) {
-  return findCastRecordByIntColumn(FILE_ENROLLMENTS, column, match, columnsToEnrollment);
+  return (Enrollment*) findCastRecordByIntColumn(FILE_ENROLLMENTS, column, match, columnsToEnrollment);
 }
 
 IdList* findAllEnrollmentsByIntColumn(int column, int match) {
-  return findAllRecordsByIntColumn(FILE_ENROLLMENTS, column, match);
+  return (IdList*) findAllRecordsByIntColumn(FILE_ENROLLMENTS, column, match);
 }
 
 Enrollment* findEnrollmentById(int id) {
-  return findEnrollmentByIntColumn(0, id);
+  return (Enrollment*) findEnrollmentByIntColumn(0, id);
 }
 
 IdList* findAllEnrollmentsByStudentId(int studentId) {
@@ -1219,12 +1219,12 @@ void enrollmentLister(Columns* columns, bool head) {
     printSeparator(124);
   }
 
-  Enrollment* enrollment = columnsToEnrollment(columns);
-  Student* student = findStudentById(enrollment->studentId);
-  Course* course = findCourseById(enrollment->courseId);
+  Enrollment* enrollment = (Enrollment*) columnsToEnrollment(columns);
+  Student* student = (Student*) findStudentById(enrollment->studentId);
+  Course* course = (Course*) findCourseById(enrollment->courseId);
 
-  char* enrollmentState = enrollment->state == ENROLLED ?
-    "Enrolled" : "Dropped";
+  char* enrolled = "Enrolled";
+  char* dropped = "Dropped";
 
   char* studentInfo = mallocstr(47);
   sprintf(studentInfo, "%-.15s %-.15s %-.15s", student->number, student->name, student->surname);
@@ -1235,7 +1235,7 @@ void enrollmentLister(Columns* columns, bool head) {
   printf(
     "%-47s %-46s %-20s %-10s\n",
     studentInfo, courseInfo,
-    enrollment->date, enrollmentState
+    enrollment->date, enrollment->state == ENROLLED ? enrolled : dropped
   );
 
   free(studentInfo);
@@ -1558,7 +1558,7 @@ void* columnsToCourse(Columns* columns) {
 }
 
 char* courseToLine(void* data) {
-  Course* course = data;
+  Course* course = (Course*) data;
   char* line = mallocstr(LINESIZE);
   sprintf(
     line,
@@ -1576,18 +1576,18 @@ char* courseToLine(void* data) {
 }
 
 void freeCourse(void* data) {
-  Course* course = data;
+  Course* course = (Course*) data;
   free(course->code);
   free(course->name);
   free(course);
 }
 
 Course* findCourseByColumn(int column, char* match) {
-  return findCastRecordByColumn(FILE_COURSES, column, match, columnsToCourse);
+  return (Course*) findCastRecordByColumn(FILE_COURSES, column, match, columnsToCourse);
 }
 
 Course* findCourseByIntColumn(int column, int match) {
-  return findCastRecordByIntColumn(FILE_COURSES, column, match, columnsToCourse);
+  return (Course*) findCastRecordByIntColumn(FILE_COURSES, column, match, columnsToCourse);
 }
 
 Course* findCourseById(int id) {
@@ -1644,7 +1644,7 @@ bool courseExistanceByCodeTester(char* courseCode, char* searchStr) {
 }
 
 void courseLister(Columns* columns, bool head) {
-  Course* course = columnsToCourse(columns);
+  Course* course = (Course*) columnsToCourse(columns);
   
   if (head) {
     printSeparator(141);
