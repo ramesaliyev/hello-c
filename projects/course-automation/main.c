@@ -401,9 +401,14 @@ Columns* getLastRecord(char* filename) {
   }
   fclose(file);
 
-  if (i == 0) return NULL;
+  if (i == 0) {
+  	free(line);
+  	return NULL;
+  };
+  
   Columns* columns = parse(line);
-  free(line); 
+  free(line);
+  
   return columns;
 }
 
@@ -419,7 +424,6 @@ bool fileHasRecord(char* filename) {
   FILE* file = fopen(filename, "r");
   if (file==NULL) return false;
   char* line = mallocstr(LINESIZE);
-  clearstr(line);
   fgets(line, LINESIZE, file);
   bool hasRecord = !isEmptyStr(line);
   free(line);
@@ -1658,6 +1662,7 @@ void courseLister(Columns* columns, bool head) {
   char* lecturerInfo = mallocstr(40);
   if (course->lecturerId != 0) {
     Lecturer* lecturer = findLecturerById(course->lecturerId);
+    free(lecturerInfo);
     lecturerInfo = buildFullLecturerInfo(lecturer);
     freeLecturer(lecturer);
   } else {
