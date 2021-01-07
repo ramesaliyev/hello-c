@@ -1,8 +1,8 @@
-1,19011923,MHD Besher,Alkurdi,3,15,4
+1,19011923,MHD Besher,Alkurdi,3,0,0
 2,18011061,Emre,Arslanoglu,3,0,0
-3,18011708,Rames,Aliyev,5,15,5
-4,20011001,Sterling,Archer,7,0,0
-5,20011002,Eric,Cartman,1,0,0
+3,18011708,Rames,Aliyev,5,12,4
+4,20011001,Sterling,Archer,7,15,4
+5,20011002,Eric,Cartman,1,7,2
 6,20011003,Micheal,Scott,1,0,0
 7,20011004,Jake,Peralta,1,0,0
 8,20011005,Stan,Marsh,1,0,0
