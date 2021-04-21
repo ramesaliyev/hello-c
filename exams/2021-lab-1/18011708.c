@@ -118,12 +118,6 @@ char* mallocstr(int size) {
   return (char*) malloc((size + 1) * sizeof(char));
 }
 
-char* copystr(char* str) {
-  char* copy = mallocstr(strlen(str));
-  if (copy) strcpy(copy, str);
-  return copy;
-}
-
 void clearstr(char* str) {
   int i, j;
   char chr;
@@ -147,12 +141,6 @@ char* scanRaw(int size) {
     while (((ch = getchar()) != NLCHR) && (ch != EOF));
   }
 
-  return input;
-}
-
-char* scan(int size) {
-  char* input = scanRaw(size);
-  clearstr(input);
   return input;
 }
 
