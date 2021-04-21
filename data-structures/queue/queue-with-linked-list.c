@@ -50,6 +50,9 @@ int dequeue_list(QueueLinkedList * queue) {
     queue->front = queue->front->next;
     queue->counter--;
     free(front);
+    if (queue->front == NULL) {
+      queue->rear = NULL;
+    }
     return val;
   }
 
