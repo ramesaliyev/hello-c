@@ -11,6 +11,73 @@
 #define I1 "    "
 
 /**
+ * Non-Logic-Specific Common functionalities.
+ */
+bool inArrayChr(char* array, int size, char value) {
+  int i = 0;
+  while(i < size) if (array[i++] == value) return true;
+  return false;
+}
+
+char* mallocstr(int size) {
+  return (char*) malloc((size + 1) * sizeof(char));
+}
+
+void clearstr(char* str) {
+  char allowed[] = {'-', ' ', '.', '?', ',', '!'};
+  size_t allowedlen = sizeof(allowed) / sizeof(char);
+
+  int i, j;
+  char chr;
+
+  i = j = 0;
+  while ((chr = str[i++]) != NULCHR) {
+    if (isalnum(chr) || inArrayChr(allowed, allowedlen, chr)) {
+      str[j++] = chr;
+    }
+  }
+
+  str[j] = NULCHR;
+}
+
+char* scanRaw(int size) {
+  char* input = mallocstr(size);
+  fgets(input, size, stdin);
+
+  if (input[strlen(input)-1] != NLCHR) {
+    int ch;
+    while (((ch = getchar()) != NLCHR) && (ch != EOF));
+  }
+
+  return input;
+}
+
+char* scanStr(int size) {
+  char* input = scanRaw(size);
+
+  if (strcmp(input, NLSTR) == 0) {
+    strcpy(input, "");
+  } else if (strcmp(input, " \n") == 0) {
+    strcpy(input, "");
+  } else {
+    clearstr(input);
+  }
+
+  return input;
+}
+
+int scanInt() {
+  char* input = scanRaw(10);
+  int num = atoi(input);
+  free(input); 
+  return num;
+}
+
+char* scanLine() {
+  return scanStr(LINESIZE);
+}
+
+/**
  * Data structure operations.
  */
 typedef struct Vertex Vertex;
@@ -87,16 +154,40 @@ bool hasEdge(Graph* graph, int src, int dest) {
   return false;
 }
 
-bool hasVertex(Graph* graph, char* text) {
+int getNextAvailableSymbol(Graph* graph) {
+  int i = 0;
+  while (graph->symbols[i]->text != NULL) {
+    i++;
+  }
+  return i;
+}
+
+int getSymbol(Graph* graph, char* text) {
   int i;
   for (i = 0; i < graph->vertexCount; i++) {
     char* symbolText = graph->symbols[i]->text;
-    if (symbolText != null && strcmp(symbolText, text) == 0) {
-      return true;
+    if (symbolText != NULL && strcmp(symbolText, text) == 0) {
+      return i;
     }
   }
 
-  return false;
+  return -1;
+}
+
+int getCreateSymbol(Graph* graph, char* text) {
+  int symbol = getSymbol(graph, text);
+
+  if (symbol == -1) {
+    symbol = getNextAvailableSymbol(graph);
+    graph->symbols[symbol]->text = mallocstr(LINESIZE);
+    strcpy(graph->symbols[symbol]->text, text);
+  }
+
+  return symbol;
+}
+
+bool hasVertex(Graph* graph, char* text) {
+  return getSymbol(graph, text) != -1;
 }
 
 void freeGraph(Graph* graph) {
@@ -139,79 +230,17 @@ void printGraph(Graph* graph) {
 }
 
 /**
- * Common functionalities.
- */
-bool inArrayChr(char* array, int size, char value) {
-  int i = 0;
-  while(i < size) if (array[i++] == value) return true;
-  return false;
-}
-
-char* mallocstr(int size) {
-  return (char*) malloc((size + 1) * sizeof(char));
-}
-
-void clearstr(char* str) {
-  char allowed[] = {'-', ' ', '.', '?', ',', '!'};
-  size_t allowedlen = sizeof(allowed) / sizeof(char);
-
-  int i, j;
-  char chr;
-
-  i = j = 0;
-  while ((chr = str[i++]) != NULCHR) {
-    if (isalnum(chr) || inArrayChr(allowed, allowedlen, chr)) {
-      str[j++] = chr;
-    }
-  }
-
-  str[j] = NULCHR;
-}
-
-char* scanRaw(int size) {
-  char* input = mallocstr(size);
-  fgets(input, size, stdin);
-
-  if (input[strlen(input)-1] != NLCHR) {
-    int ch;
-    while (((ch = getchar()) != NLCHR) && (ch != EOF));
-  }
-
-  return input;
-}
-
-char* scanStr(int size) {
-  char* input = scanRaw(size);
-
-  if (strcmp(input, NLSTR) == 0) {
-    strcpy(input, "");
-  } else if (strcmp(input, " \n") == 0) {
-    strcpy(input, "");
-  } else {
-    clearstr(input);
-  }
-
-  return input;
-}
-
-int scanInt() {
-  char* input = scanRaw(10);
-  int num = atoi(input);
-  free(input); 
-  return num;
-}
-
-char* scanLine() {
-  return scanStr(LINESIZE);
-}
-
-/**
  * Assigment Logic.
  */
 Graph* buildGraphFromInput() {
   printf(I1"How many query graph has? (Vertex count?): ");
   int vertexCount = scanInt();
   
+  if (vertexCount == 0) {
+    printf(I1"Error: Cannot use 0 as vertex count, input ignored.\n");
+    return buildGraphFromInput();
+  }
+
   Graph* graph = createGraph(vertexCount);
 
   int i;
@@ -219,10 +248,16 @@ Graph* buildGraphFromInput() {
     printf(I1"%d/%d Enter text of query #%d: ", i+1, vertexCount, i+1);
     char* text = scanLine();
 
-    if (!hasVertex(graph, text)) {
-      graph->symbols[i]->text = text;
+    if (strcmp(text, "") == 0) {
+      printf(I1"Error: Text cannot be empty string, input ignored.\n");
+      i--;
     } else {
-      printf(I1"Error: Wrong formatted input, ignored.\n");
+      if (!hasVertex(graph, text)) {
+        graph->symbols[i]->text = text;
+      } else {
+        printf(I1"Error: Vertex with this query alread exist, input ignored.\n");
+        i--;
+      }
     }
   }
 
@@ -269,6 +304,39 @@ Graph* buildGraphFromInput() {
 }
 
 Graph* mergeGraphs(Graph* graphA, Graph* graphB) {
+  int totalVertexCount = graphA->vertexCount;
+
+  int i;
+  for (i = 0; i < graphB->vertexCount; i++) {
+    if (!hasVertex(graphA, graphB->symbols[i]->text)) {
+      totalVertexCount++;
+    }
+  }
+
+  Graph* mergedGraph = createGraph(totalVertexCount);
+
+  Graph* graphs[] = {graphA, graphB};
+  int j;
+  for (j = 0; j < 2; j++) {
+    Graph* graph = graphs[j];
+    int k;
+    for (k = 0; k < graph->vertexCount; k++) {
+      int src = getCreateSymbol(mergedGraph, graph->symbols[k]->text);
+
+      Vertex* vertex = graph->adjList[k];
+      while (vertex != NULL) {
+        int dest = getCreateSymbol(mergedGraph, vertex->symbol->text);
+        
+        if (!hasEdge(mergedGraph, src, dest)) {
+          addEdge(mergedGraph, src, dest);
+        }
+        
+        vertex = vertex->next;
+      }
+    }
+  } 
+
+  return mergedGraph;
 }
 
 /**
@@ -286,7 +354,7 @@ int main() {
   Graph* graphB = buildGraphFromInput();
 
   // Step 2: Merge graphs.
-  Graph* mergedGraph = mergedGraphs(graphA, graphB);
+  Graph* mergedGraph = mergeGraphs(graphA, graphB);
 
   // Step 3: Query graphs.
 
