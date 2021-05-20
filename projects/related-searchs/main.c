@@ -286,13 +286,13 @@ Graph* buildGraphFromInput() {
   }
 
   printf("\n");
-  printf(INDENT"Please mark similar queries by providing comma separated query ids.\n");
+  printf(INDENT"Please mark similar queries one-by-one by providing dash separated query ids.\n");
   printf(INDENT"For example if query #1 similar to #2 enter 1-2 and press enter.\n");
   printf(INDENT"If you enter for example 1-2 do not enter 2-1 since it is same relation.\n");
-  printf(INDENT"When you done enter empty string to finish.\n\n");
+  printf(INDENT"When you done just press enter without input to finish.\n\n");
   
   while (true) {
-    printf(INDENT"Enter relation: ");
+    printf(INDENT"Enter a relation (eg: 1-2) and press enter: ");
     char* line = scanLine();
 
     if (strcmp(line, "") != 0) {
