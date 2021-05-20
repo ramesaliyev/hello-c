@@ -8,7 +8,7 @@
 #define NULCHR '\0'
 #define NLCHR '\n'
 #define NLSTR "\n"
-#define I1 "    "
+#define INDENT "    "
 
 /**
  * Non-Logic-Specific Common functionalities.
@@ -190,6 +190,30 @@ bool hasVertex(Graph* graph, char* text) {
   return getSymbol(graph, text) != -1;
 }
 
+void sortDescVerticesOfSymbol(Graph* graph, int symbol) {
+  Vertex* currVertex = NULL;
+  Vertex* nextVertex = NULL;
+  Symbol* nextSymbol = NULL;
+
+  currVertex = graph->adjList[symbol];
+
+  while (currVertex != NULL) {
+    nextVertex = currVertex->next;
+
+    while (nextVertex != NULL) {
+      if (currVertex->symbol->searchCount < nextVertex->symbol->searchCount) {
+        nextSymbol = nextVertex->symbol;
+        nextVertex->symbol = currVertex->symbol;
+        currVertex->symbol = nextSymbol;
+      }
+
+      nextVertex = nextVertex->next;
+    }
+
+    currVertex = currVertex->next;
+  }
+}
+
 void freeGraph(Graph* graph) {
   int i;
   for (i = 0; i < graph->vertexCount; i++) {
@@ -233,11 +257,11 @@ void printGraph(Graph* graph) {
  * Assigment Logic.
  */
 Graph* buildGraphFromInput() {
-  printf(I1"How many query graph has? (Vertex count?): ");
+  printf(INDENT"How many query graph has? (Vertex count?): ");
   int vertexCount = scanInt();
   
   if (vertexCount == 0) {
-    printf(I1"Error: Cannot use 0 as vertex count, input ignored.\n");
+    printf(INDENT"Error: Cannot use 0 as vertex count, input ignored.\n");
     return buildGraphFromInput();
   }
 
@@ -245,30 +269,30 @@ Graph* buildGraphFromInput() {
 
   int i;
   for (i = 0; i < vertexCount; i++) {
-    printf(I1"%d/%d Enter text of query #%d: ", i+1, vertexCount, i+1);
+    printf(INDENT"%d/%d Enter text of query #%d: ", i+1, vertexCount, i+1);
     char* text = scanLine();
 
     if (strcmp(text, "") == 0) {
-      printf(I1"Error: Text cannot be empty string, input ignored.\n");
+      printf(INDENT"Error: Text cannot be empty string, input ignored.\n");
       i--;
     } else {
       if (!hasVertex(graph, text)) {
         graph->symbols[i]->text = text;
       } else {
-        printf(I1"Error: Vertex with this query alread exist, input ignored.\n");
+        printf(INDENT"Error: Vertex with this query alread exist, input ignored.\n");
         i--;
       }
     }
   }
 
   printf("\n");
-  printf(I1"Please mark similar queries by providing comma separated query ids.\n");
-  printf(I1"For example if query #1 similar to #2 enter 1-2 and press enter.\n");
-  printf(I1"If you enter for example 1-2 do not enter 2-1 since it is same relation.\n");
-  printf(I1"When you done enter empty string to finish.\n\n");
+  printf(INDENT"Please mark similar queries by providing comma separated query ids.\n");
+  printf(INDENT"For example if query #1 similar to #2 enter 1-2 and press enter.\n");
+  printf(INDENT"If you enter for example 1-2 do not enter 2-1 since it is same relation.\n");
+  printf(INDENT"When you done enter empty string to finish.\n\n");
   
   while (true) {
-    printf(I1"Enter relation: ");
+    printf(INDENT"Enter relation: ");
     char* line = scanLine();
 
     if (strcmp(line, "") != 0) {
@@ -285,13 +309,13 @@ Graph* buildGraphFromInput() {
           if (!hasEdge(graph, src, dest)) {
             addEdge(graph, src, dest);
           } else {
-            printf(I1"Error: Relation exist, input ignored.\n");
+            printf(INDENT"Error: Relation exist, input ignored.\n");
           }
         } else {
-          printf(I1"Error: Wrong input, ids out of bound, input ignored.\n");
+          printf(INDENT"Error: Wrong input, ids out of bound, input ignored.\n");
         }       
       } else {
-        printf(I1"Error: Wrong formatted input, ignored.\n");
+        printf(INDENT"Error: Wrong formatted input, ignored.\n");
       }
     } else {
       break;
@@ -339,6 +363,34 @@ Graph* mergeGraphs(Graph* graphA, Graph* graphB) {
   return mergedGraph;
 }
 
+void showMostRelatedQueries(Graph* graph, char* query) {
+  int resultLength = 3;
+  int symbol = getSymbol(graph, query);
+
+  if (symbol == -1) {
+    printf(INDENT"Given query does not exist in database.\n");
+  } else {
+    sortDescVerticesOfSymbol(graph, symbol);
+
+    Vertex* vertex = graph->adjList[symbol];
+
+    if (vertex == NULL) {
+      printf(INDENT"Given query has no related queries.\n");
+    } else {
+      int i = 0;
+      printf(INDENT"Related queries:\n");
+
+      while (i < resultLength && vertex != NULL) {
+        printf(INDENT"- %s (Search count: %d) \n", vertex->symbol->text, vertex->symbol->searchCount);
+        vertex = vertex->next;
+        i++;
+      }
+    }
+
+    graph->symbols[symbol]->searchCount++;
+  }
+}
+
 /**
  * Main Flow
  */
@@ -356,14 +408,33 @@ int main() {
   // Step 2: Merge graphs.
   Graph* mergedGraph = mergeGraphs(graphA, graphB);
 
-  // Step 3: Query graphs.
-
-  printf("Graph A: \n");
+  printf("\nFirst Graph: \n");
   printGraph(graphA);
-  printf("Graph B: \n");
+  printf("\nSecond Graph: \n");
   printGraph(graphB);
-  printf("Merged Graph: \n");
+  printf("\nMerged Graph: \n");
   printGraph(mergedGraph);
+
+  // Step 3: Query graphs.
+  printf("\nSearch engine ready for queries!\n");
+  printf("Enter a query to see it's most related queries: \n");
+  printf("Enter \"exit\" to exit and \"print\" to print graph.\n");
+
+  while (true) {
+    printf("\n");
+    printf(INDENT"Enter query: ");
+    char* query = scanLine();
+
+    if (strcmp(query, "exit") == 0) {
+      break;
+    } else if (strcmp(query, "print") == 0) {
+      printf("\nMerged Graph: \n");
+      printGraph(mergedGraph);
+    } else {
+      showMostRelatedQueries(mergedGraph, query);
+      printf("\n");
+    }
+  }  
 
   freeGraph(graphA);
   freeGraph(graphB);
