@@ -108,7 +108,7 @@ PGM* createPGM(int maxValue, int width, int height) {
   return pgm;
 }
 
-void skipComments(FILE* file){
+void skipCommentsAndWhitespace(FILE* file) {
   int chr;
   
   // Ignore blank lines.
@@ -125,7 +125,7 @@ void skipComments(FILE* file){
   fgets(line, sizeof(line), file);
     
   // Continue to skipping next comments.
-  skipComments(file);
+  skipCommentsAndWhitespace(file);
 }
 
 PGM* readPGM(char* filepath) {
@@ -141,7 +141,7 @@ PGM* readPGM(char* filepath) {
   int width;
   int height;
 
-  skipComments(file);
+  skipCommentsAndWhitespace(file);
   fscanf(file, "%s", pgmType);
 
   if (strcmp(pgmType, PGM_TYPE)) {
@@ -149,11 +149,11 @@ PGM* readPGM(char* filepath) {
     return NULL;
   }
   
-  skipComments(file);
+  skipCommentsAndWhitespace(file);
   fscanf(file, "%d %d", &(width), &(height));
-  skipComments(file);
+  skipCommentsAndWhitespace(file);
   fscanf(file, "%d", &(maxValue));
-  skipComments(file);
+  fgetc(file); // Skip last whitespace before pixels.
 
   PGM* pgm = createPGM(maxValue, width, height);
 
@@ -317,7 +317,7 @@ CPGM* readCPGM(char* filepath) {
   int width;
   int height;
 
-  skipComments(file);
+  skipCommentsAndWhitespace(file);
   fscanf(file, "%s", cpgmType);
 
   if (strcmp(cpgmType, CPGM_TYPE)) {
@@ -325,9 +325,9 @@ CPGM* readCPGM(char* filepath) {
     return NULL;
   }
 
-  skipComments(file);
+  skipCommentsAndWhitespace(file);
   fscanf(file, "%d %d %d %d", &(width), &(height), &(maxValue), &(blockCount));
-  skipComments(file);
+  fgetc(file); // Skip last whitespace before pixels.
 
   CPGM* cpgm = createCPGM(blockCount, maxValue, width, height);
 
@@ -374,7 +374,7 @@ void destroyCPGM(CPGM* cpgm) {
  * (6) Main
  */
 int main() {
-  PGM* pgm_read = readPGM("pgms/dot.pgm");
+  PGM* pgm_read = readPGM("pgms/gman.pgm");
   CPGM* cpgm_original = compressPGM(pgm_read);
 
   writeCPGM(cpgm_original, "tmp/tzest.cpgm");
