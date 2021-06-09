@@ -14,14 +14,16 @@
  * (2) Common generic utilities.
  * (3) PGM related functions.
  * (4) Compress / Decompress
- * (5) Interface operations
- * (6) Main
+ * (5) Operations on compressed file.
+ * (6) Interface operations
+ * (7) Main
  */
 
 /**
  * (0) Program configuration definitions.
  */
 #define LINESIZE 256
+#define MAX_COLOR 255
 #define PGM_TYPE "P5"
 #define CPGM_TYPE "CP5"
 #define COMMENT_IDENTIFIER '#'
@@ -35,7 +37,7 @@ typedef uint8_t Pixel;
 typedef uint8_t Block;
 typedef struct PGM PGM;
 typedef struct CPGM CPGM;
-typedef struct RLENode RLENode;
+typedef struct BlockGroup BlockGroup;
 
 struct PGM {
   Pixel* pixels;
@@ -52,11 +54,11 @@ struct CPGM {
   int height;
 };
 
-struct RLENode {
+struct BlockGroup {
   RunLength runlength;
   Pixel pixel;
-  RLENode* next;
-  RLENode* prev;
+  BlockGroup* next;
+  BlockGroup* prev;
 };
 
 /**
@@ -99,7 +101,7 @@ PGM* createPGM(int maxValue, int width, int height) {
     return NULL;
   }
 
-  pgm->maxValue = 255; //maxValue;
+  pgm->maxValue = MAX_COLOR; //maxValue;
   pgm->width = width;
   pgm->height = height;
 
@@ -192,6 +194,40 @@ void destroyPGM(PGM* pgm) {
 /**
  * (4) Compress / Decompress
  */
+BlockGroup* createBlockGroup() {
+  BlockGroup* blockGroup = (BlockGroup*) malloc(sizeof(BlockGroup));
+  blockGroup->next = NULL;
+  blockGroup->prev = NULL;
+  return blockGroup;
+}
+
+void updateBlockGroup(BlockGroup* blockGroup, CPGM* cpgm, int offset) {
+  Block rlLSB = cpgm->blocks[offset];
+  Block rlMSB = cpgm->blocks[offset + 1];
+  blockGroup->pixel = cpgm->blocks[offset + 2];
+  blockGroup->runlength = (rlMSB << 8) | rlLSB;
+}
+
+void freeBlockGroup(BlockGroup* blockGroup) {
+  free(blockGroup);
+}
+
+void insertCPGMBlockToBlocks(Block* blocks, RunLength runlength, Pixel pixel, int offset) {
+  Block rlLSB = runlength & 0xFF;
+  Block rlMSB = runlength >> 8;
+
+  blocks[(offset * BLOCK_GROUP_SIZE)] = rlLSB;
+  blocks[(offset * BLOCK_GROUP_SIZE) + 1] = rlMSB;
+  blocks[(offset * BLOCK_GROUP_SIZE) + 2] = pixel;
+}
+
+bool validateCPGM(CPGM* cpgm) {
+  // a
+  // b
+  // c
+  return true;
+}
+
 CPGM* createCPGM(int blockCount, int maxValue, int width, int height) {
   CPGM* cpgm = (CPGM*) malloc(sizeof(CPGM));
 
@@ -213,15 +249,6 @@ CPGM* createCPGM(int blockCount, int maxValue, int width, int height) {
   cpgm->height = height;
 
   return cpgm;
-}
-
-void insertCPGMBlockToBlocks(Block* blocks, RunLength runlength, Pixel pixel, int offset) {
-  Block rlLSB = runlength & 0xFF;
-  Block rlMSB = runlength >> 8;
-
-  blocks[(offset * BLOCK_GROUP_SIZE)] = rlLSB;
-  blocks[(offset * BLOCK_GROUP_SIZE) + 1] = rlMSB;
-  blocks[(offset * BLOCK_GROUP_SIZE) + 2] = pixel;
 }
 
 CPGM* compressPGM(PGM* pgm) {
@@ -271,32 +298,25 @@ CPGM* compressPGM(PGM* pgm) {
   return cpgm;
 }
 
-bool validateCPGM(CPGM* cpgm) {
-  // a
-  // b
-  // c
-  return true;
-}
-
 PGM* decompressCPGM(CPGM* cpgm) {
   if (!validateCPGM(cpgm)) {
     printf("Error: Given CPGM is not valid state.\n");
     return NULL;
   }
   
+  BlockGroup* blockGroup = createBlockGroup();
   PGM* pgm = createPGM(cpgm->maxValue, cpgm->width, cpgm->height);
 
   int i = 0;
   int j;
   for (j = 0; j < cpgm->blockCount; j += 3) {
-    Block rlLSB = cpgm->blocks[j];
-    Block rlMSB = cpgm->blocks[j + 1];
-    Pixel pixel = cpgm->blocks[j + 2];
-    RunLength runlength = (rlMSB << 8) | rlLSB;
+    updateBlockGroup(blockGroup, cpgm, j);
 
-    memset(pgm->pixels + i, pixel, runlength);
-    i += runlength;
+    memset(pgm->pixels + i, blockGroup->pixel, blockGroup->runlength);
+    i += blockGroup->runlength;
   }
+
+  freeBlockGroup(blockGroup);
 
   return pgm;
 }
@@ -365,11 +385,45 @@ void destroyCPGM(CPGM* cpgm) {
 }
 
 /**
- * (5) Interface operations
+ * (5) Operations on compressed file.
+ */
+void printHistogram(CPGM* cpgm) {
+  RunLength colors[MAX_COLOR + 1] = {0};
+  BlockGroup* blockGroup = createBlockGroup();
+
+  int j;
+  for (j = 0; j < cpgm->blockCount; j += 3) {
+    updateBlockGroup(blockGroup, cpgm, j);
+    colors[blockGroup->pixel] += blockGroup->runlength;
+  }
+
+  printf("%-5s  %-5s\n", "COLOR", "COUNT");
+  printf("-----  ---------------\n");
+
+  int total = 0;
+  int k;
+  for (k = 0; k <= MAX_COLOR; k++) {
+    RunLength count = colors[k];
+
+    if (count > 0) {
+      printf("%-5d  %-5hu\n", k, count);
+      total++;
+    }
+  }
+
+  printf("----------------------\n");
+  printf("Total color count: %3d\n", total);
+  printf("----------------------\n");
+
+  freeBlockGroup(blockGroup);
+}
+
+/**
+ * (6) Interface operations
  */
 
 /**
- * (6) Main
+ * (7) Main
  */
 int main() {
   PGM* pgm_read = readPGM("pgms/gman.pgm");
@@ -384,6 +438,8 @@ int main() {
   writePGM(pgm_read, "tmp/test_read.pgm");
   writePGM(pgm_dcomp, "tmp/test_dcomp.pgm");
   writePGM(pgm_dcomp_read, "tmp/test_dcomp_read.pgm");
+
+  // printHistogram(cpgm_original);
 
   return 0;
 }
