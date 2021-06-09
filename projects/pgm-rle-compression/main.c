@@ -26,8 +26,6 @@
 #define CPGM_TYPE "CP5"
 #define COMMENT_IDENTIFIER '#'
 #define BLOCK_GROUP_SIZE 3
-#define CPGM_BADGE ""
-#define PGM_BADGE ""
 
 /**
  * (1) Data types and structures.
@@ -174,7 +172,7 @@ void writePGM(PGM* pgm, char* filepath) {
   
   // Write header
   fprintf(file, 
-    PGM_TYPE"\n"PGM_BADGE"\n%d %d\n%d\n",
+    PGM_TYPE"\n%d %d\n%d\n",
     pgm->width,
     pgm->height,
     pgm->maxValue
@@ -348,7 +346,7 @@ void writeCPGM(CPGM* cpgm, char* filepath) {
   
   // Write header
   fprintf(file, 
-    CPGM_TYPE"\n"CPGM_BADGE"\n%d %d %d %d\n",
+    CPGM_TYPE"\n%d %d %d %d\n",
     cpgm->width,
     cpgm->height,
     cpgm->maxValue,
