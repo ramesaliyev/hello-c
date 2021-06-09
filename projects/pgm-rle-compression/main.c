@@ -57,8 +57,6 @@ struct CPGM {
 struct BlockGroup {
   RunLength runlength;
   Pixel pixel;
-  BlockGroup* next;
-  BlockGroup* prev;
 };
 
 /**
@@ -195,10 +193,7 @@ void destroyPGM(PGM* pgm) {
  * (4) Compress / Decompress
  */
 BlockGroup* createBlockGroup() {
-  BlockGroup* blockGroup = (BlockGroup*) malloc(sizeof(BlockGroup));
-  blockGroup->next = NULL;
-  blockGroup->prev = NULL;
-  return blockGroup;
+  return (BlockGroup*) malloc(sizeof(BlockGroup));
 }
 
 void updateBlockGroup(BlockGroup* blockGroup, CPGM* cpgm, int offset) {
@@ -439,7 +434,7 @@ int main() {
   writePGM(pgm_dcomp, "tmp/test_dcomp.pgm");
   writePGM(pgm_dcomp_read, "tmp/test_dcomp_read.pgm");
 
-  // printHistogram(cpgm_original);
+  printHistogram(cpgm_original);
 
   return 0;
 }
