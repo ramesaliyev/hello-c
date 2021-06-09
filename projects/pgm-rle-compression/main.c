@@ -221,8 +221,8 @@ void insertCPGMBlockToBlocks(Block* blocks, RunLength runlength, Pixel pixel, in
   Block rlLSB = runlength & 0xFF;
   Block rlMSB = runlength >> 8;
 
-  blocks[(offset * BLOCK_GROUP_SIZE)] = rlMSB;
-  blocks[(offset * BLOCK_GROUP_SIZE) + 1] = rlLSB;
+  blocks[(offset * BLOCK_GROUP_SIZE)] = rlLSB;
+  blocks[(offset * BLOCK_GROUP_SIZE) + 1] = rlMSB;
   blocks[(offset * BLOCK_GROUP_SIZE) + 2] = pixel;
 }
 
@@ -291,8 +291,8 @@ PGM* decompressCPGM(CPGM* cpgm) {
   int i = 0;
   int j;
   for (j = 0; j < cpgm->blockCount; j += 3) {
-    Block rlMSB = cpgm->blocks[j];
-    Block rlLSB = cpgm->blocks[j + 1];
+    Block rlLSB = cpgm->blocks[j];
+    Block rlMSB = cpgm->blocks[j + 1];
     Pixel pixel = cpgm->blocks[j + 2];
     RunLength runlength = (rlMSB << 8) | rlLSB;
 
