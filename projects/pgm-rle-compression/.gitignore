@@ -1,4 +1,6 @@
 /tmp/*.pgm
 /tmp/*.cpgm
+/tmp/*.txt
 /compare_pgms
 *.exe
+*.txt

@@ -24,8 +24,9 @@
  */
 #define LINESIZE 256
 #define MAX_COLOR 255
-#define PGM_TYPE "P5"
-#define CPGM_TYPE "CP5"
+#define P5 "P5"
+#define P2 "P2"
+#define CPGM_TYPE "CPGMv0"
 #define COMMENT_IDENTIFIER '#'
 #define BLOCK_GROUP_SIZE 3
 
@@ -40,6 +41,7 @@ typedef struct CPGM CPGM;
 typedef struct BlockGroup BlockGroup;
 
 struct PGM {
+  char* type;
   Pixel* pixels;
   int maxValue;
   int width;
@@ -47,6 +49,7 @@ struct PGM {
 };
 
 struct CPGM {
+  char* pgmType;
   Block* blocks;
   int blockCount;
   int maxValue;
@@ -84,7 +87,28 @@ FILE* openFile(char* filename, char* as) {
 /**
  * (3) PGM related functions. 
  */
-PGM* createPGM(int maxValue, int width, int height) {
+int skipWhitespace(FILE* file) {
+  int chr;
+  while ((chr = fgetc(file)) != EOF && isspace(chr));
+  if (chr != EOF) fseek(file, -1, SEEK_CUR);
+  return chr;
+}
+
+void skipCommentsAndWhitespace(FILE* file) {
+  int nextChr = skipWhitespace(file);
+
+  // Go one byte back if not comment.
+  if (nextChr == COMMENT_IDENTIFIER) {
+    // Skip line.
+    char line[LINESIZE];
+    fgets(line, sizeof(line), file);
+      
+    // Continue to skipping next comments.
+    skipCommentsAndWhitespace(file);
+  }
+}
+
+PGM* createPGM(char* type, int maxValue, int width, int height) {
   PGM* pgm = (PGM*) malloc(sizeof(PGM));
 
   if (pgm == NULL) {
@@ -99,6 +123,7 @@ PGM* createPGM(int maxValue, int width, int height) {
     return NULL;
   }
 
+  pgm->type = copystr(type);
   pgm->maxValue = MAX_COLOR; //maxValue;
   pgm->width = width;
   pgm->height = height;
@@ -106,24 +131,12 @@ PGM* createPGM(int maxValue, int width, int height) {
   return pgm;
 }
 
-void skipCommentsAndWhitespace(FILE* file) {
-  int chr;
+void readP5Pixels(PGM* pgm, FILE* file) {
   
-  // Ignore blank lines.
-  while ((chr = fgetc(file)) != EOF && isspace(chr));
+}
 
-  // Go one byte back if not comment.
-  if (chr != COMMENT_IDENTIFIER) {
-    fseek(file, -1, SEEK_CUR);
-    return;
-  }
-
-  // Skip line.
-  char line[LINESIZE];
-  fgets(line, sizeof(line), file);
-    
-  // Continue to skipping next comments.
-  skipCommentsAndWhitespace(file);
+void readP2Pixels(PGM* pgm, FILE* file) {
+  
 }
 
 PGM* readPGM(char* filepath) {
@@ -142,8 +155,8 @@ PGM* readPGM(char* filepath) {
   skipCommentsAndWhitespace(file);
   fscanf(file, "%s", pgmType);
 
-  if (strcmp(pgmType, PGM_TYPE)) {
-    printf("Error: Incorrect PGM type, it should be "PGM_TYPE". Given type: %s\n", pgmType);
+  if (strcmp(pgmType, P5)) {
+    printf("Error: Incorrect PGM type, it should be "P5". Given type: %s\n", pgmType);
     return NULL;
   }
   
@@ -153,7 +166,7 @@ PGM* readPGM(char* filepath) {
   fscanf(file, "%d", &(maxValue));
   fgetc(file); // Skip last whitespace before pixels.
 
-  PGM* pgm = createPGM(maxValue, width, height);
+  PGM* pgm = createPGM(pgmType, maxValue, width, height);
 
   if (pgm == NULL) {
     printf("Error: Cannot read PGM due to memory allocation issues.");
@@ -167,12 +180,21 @@ PGM* readPGM(char* filepath) {
   return pgm;
 }
 
+void writeP5Pixels(PGM* pgm, FILE* file) {
+
+}
+
+void writeP2Pixels(PGM* pgm, FILE* file) {
+  
+}
+
 void writePGM(PGM* pgm, char* filepath) {
   FILE* file = openFile(filepath, "wb");
   
   // Write header
   fprintf(file, 
-    PGM_TYPE"\n%d %d\n%d\n",
+    "%s\n%d %d\n%d\n",
+    pgm->type,
     pgm->width,
     pgm->height,
     pgm->maxValue
@@ -185,6 +207,7 @@ void writePGM(PGM* pgm, char* filepath) {
 }
 
 void destroyPGM(PGM* pgm) {
+  free(pgm->type);
   free(pgm->pixels);
   free(pgm);
 }
@@ -223,7 +246,7 @@ bool validateCPGM(CPGM* cpgm) {
   return true;
 }
 
-CPGM* createCPGM(int blockCount, int maxValue, int width, int height) {
+CPGM* createCPGM(int blockCount, char* pgmType, int maxValue, int width, int height) {
   CPGM* cpgm = (CPGM*) malloc(sizeof(CPGM));
 
   if (cpgm == NULL) {
@@ -238,6 +261,7 @@ CPGM* createCPGM(int blockCount, int maxValue, int width, int height) {
     return NULL;
   }
 
+  cpgm->pgmType = copystr(pgmType);
   cpgm->blockCount = blockCount;
   cpgm->maxValue = maxValue;
   cpgm->width = width;
@@ -281,7 +305,7 @@ CPGM* compressPGM(PGM* pgm) {
     blockGroupCount++;
   }
 
-  CPGM* cpgm = createCPGM(BLOCK_GROUP_SIZE * blockGroupCount, pgm->maxValue, pgm->width, pgm->height);
+  CPGM* cpgm = createCPGM(BLOCK_GROUP_SIZE * blockGroupCount, pgm->type, pgm->maxValue, pgm->width, pgm->height);
 
   if (cpgm == NULL) {
     printf("Error: Could not compress PGM due to memory issues.");
@@ -300,7 +324,7 @@ PGM* decompressCPGM(CPGM* cpgm) {
   }
   
   BlockGroup* blockGroup = createBlockGroup();
-  PGM* pgm = createPGM(cpgm->maxValue, cpgm->width, cpgm->height);
+  PGM* pgm = createPGM(cpgm->pgmType, cpgm->maxValue, cpgm->width, cpgm->height);
 
   int i = 0;
   int j;
@@ -325,6 +349,7 @@ CPGM* readCPGM(char* filepath) {
   }
 
   char cpgmType[LINESIZE];
+  char pgmType[LINESIZE];
   int blockCount;
   int maxValue;
   int width;
@@ -339,10 +364,12 @@ CPGM* readCPGM(char* filepath) {
   }
 
   skipCommentsAndWhitespace(file);
+  fscanf(file, "%s", pgmType);
+  skipCommentsAndWhitespace(file);
   fscanf(file, "%d %d %d %d", &(width), &(height), &(maxValue), &(blockCount));
   fgetc(file); // Skip last whitespace before pixels.
 
-  CPGM* cpgm = createCPGM(blockCount, maxValue, width, height);
+  CPGM* cpgm = createCPGM(blockCount, pgmType, maxValue, width, height);
 
   if (cpgm == NULL) {
     printf("Error: Cannot read CPGM due to memory allocation issues.");
@@ -361,7 +388,8 @@ void writeCPGM(CPGM* cpgm, char* filepath) {
   
   // Write header
   fprintf(file, 
-    CPGM_TYPE"\n%d %d %d %d\n",
+    CPGM_TYPE"\n%s\n%d %d %d %d\n",
+    cpgm->pgmType,
     cpgm->width,
     cpgm->height,
     cpgm->maxValue,
@@ -375,6 +403,7 @@ void writeCPGM(CPGM* cpgm, char* filepath) {
 }
 
 void destroyCPGM(CPGM* cpgm) {
+  free(cpgm->pgmType);
   free(cpgm->blocks);
   free(cpgm);
 }
@@ -421,7 +450,9 @@ void printHistogram(CPGM* cpgm) {
  * (7) Main
  */
 int main() {
-  PGM* pgm_read = readPGM("pgms/gman.pgm");
+  char* input = "pgms/gman.pgm";
+
+  PGM* pgm_read = readPGM(input);
   CPGM* cpgm_original = compressPGM(pgm_read);
 
   writeCPGM(cpgm_original, "tmp/tzest.cpgm");
@@ -434,7 +465,7 @@ int main() {
   writePGM(pgm_dcomp, "tmp/test_dcomp.pgm");
   writePGM(pgm_dcomp_read, "tmp/test_dcomp_read.pgm");
 
-  printHistogram(cpgm_original);
+  // printHistogram(cpgm_original);
 
   return 0;
 }
