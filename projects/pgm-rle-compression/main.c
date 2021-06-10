@@ -131,14 +131,6 @@ PGM* createPGM(char* type, int maxValue, int width, int height) {
   return pgm;
 }
 
-void readP5Pixels(PGM* pgm, FILE* file) {
-  
-}
-
-void readP2Pixels(PGM* pgm, FILE* file) {
-  
-}
-
 PGM* readPGM(char* filepath) {
   FILE* file = openFile(filepath, "rb");
   
@@ -155,8 +147,8 @@ PGM* readPGM(char* filepath) {
   skipCommentsAndWhitespace(file);
   fscanf(file, "%s", pgmType);
 
-  if (strcmp(pgmType, P5)) {
-    printf("Error: Incorrect PGM type, it should be "P5". Given type: %s\n", pgmType);
+  if (strcmp(pgmType, P5) && strcmp(pgmType, P2)) {
+    printf("Error: Incorrect PGM type, it should be either "P5" or "P2". Given type: %s\n", pgmType);
     return NULL;
   }
   
@@ -173,37 +165,59 @@ PGM* readPGM(char* filepath) {
     return NULL;
   }
 
+  int pixelCount = pgm->width * pgm->height;
+
   // Read pixel values into pgm.
-  fread(pgm->pixels, sizeof(Pixel), pgm->width * pgm->height, file);
+  if (!strcmp(pgmType, P5)) {
+    // Read P5
+    fread(pgm->pixels, sizeof(Pixel), pixelCount, file);
+  } else {
+    // Read P2
+    int i, color;
+    for (i = 0; i < pixelCount; i++) {
+      skipWhitespace(file);
+      fscanf(file, "%d", &(color));
+      pgm->pixels[i] = (Pixel) color;
+      printf("%d %d\n", color, pgm->pixels[i]);
+    }
+  }
+
   fclose(file);
 
   return pgm;
 }
 
-void writeP5Pixels(PGM* pgm, FILE* file) {
-
-}
-
-void writeP2Pixels(PGM* pgm, FILE* file) {
-  
-}
-
-void writePGM(PGM* pgm, char* filepath) {
+void writePGMWithType(PGM* pgm, char* filepath, char* type) {
   FILE* file = openFile(filepath, "wb");
   
   // Write header
   fprintf(file, 
     "%s\n%d %d\n%d\n",
-    pgm->type,
+    type,
     pgm->width,
     pgm->height,
     pgm->maxValue
   );
   
-  // Write blocks.
-  fwrite(pgm->pixels, sizeof(Pixel), pgm->width * pgm->height, file);
+  int pixelCount = pgm->width * pgm->height;
+
+  // Write pixels.
+  if (!strcmp(type, P5)) {
+    // Write P5
+    fwrite(pgm->pixels, sizeof(Pixel), pixelCount, file);
+  } else {
+    // Write P2
+    int i, color;
+    for (i = 0; i < pixelCount; i++) {
+      fprintf(file, "%d%c", pgm->pixels[i], ((i+1) % pgm->width) ? ' ' : '\n');
+    }
+  }
   
   fclose(file);
+}
+
+void writePGM(PGM* pgm, char* filepath) {
+  writePGMWithType(pgm, filepath, pgm->type);
 }
 
 void destroyPGM(PGM* pgm) {
@@ -450,7 +464,7 @@ void printHistogram(CPGM* cpgm) {
  * (7) Main
  */
 int main() {
-  char* input = "pgms/gman.pgm";
+  char* input = "pgms/test.pgm";
 
   PGM* pgm_read = readPGM(input);
   CPGM* cpgm_original = compressPGM(pgm_read);
