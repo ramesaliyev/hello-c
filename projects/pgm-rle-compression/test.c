@@ -498,11 +498,11 @@ void testP2SomeExtraCases4() {
 }
 
 int main() {
-  // testP2Read();
-  // testP2ReadWriteRead();
-  // testP2Compress();
-  // testP2Compress2();
-  // testP2CPGMWriteReadDecompress();
+  testP2Read();
+  testP2ReadWriteRead();
+  testP2Compress();
+  testP2Compress2();
+  testP2CPGMWriteReadDecompress();
   testP2ReplaceColorSingle();
   testP2ReplaceColorOccurences();
   testP2ReplaceColorFirstLast();

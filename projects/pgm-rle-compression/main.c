@@ -292,9 +292,35 @@ void insertBlock(Block* blocks, RunLength runlength, Pixel pixel, int offset) {
 }
 
 bool validateCPGM(CPGM* cpgm) {
-  // a
-  // b
-  // c
+  Entry* entry = createEntry(0);
+
+  int j;
+  int pixelCount = 0;
+  int prevColor = -1;
+
+  for (j = 0; j < cpgm->entryCount; j++) {
+    updateEntry(entry, cpgm, j);
+    pixelCount += entry->runlength;
+
+    if (entry->pixel < 0 || entry->pixel > cpgm->maxValue) {
+      printf("Error: Color %d is out of bound of CPGM color range (0~%d).\n", entry->pixel, cpgm->maxValue);
+      return false;
+    }
+
+    if (prevColor == entry->pixel) {
+      printf("Error: Color %d repeating in CPGM encoding.\n", entry->pixel);
+      return false;
+    }
+
+    prevColor = entry->pixel;
+  }
+
+  if (pixelCount != cpgm->width * cpgm->height) {
+    printf("Error: Pixel count of CPGM does not match with width*height.\n");
+    return false;
+  }
+
+  freeEntry(entry);
   return true;
 }
 
