@@ -39,6 +39,8 @@
 #define CPGM_TYPE "CPGMv0"
 #define COMMENT_IDENTIFIER '#'
 #define BLOCK_PER_ENTRY 3
+#define DEFAULT_PGM_NAME "test_decoded.pgm"
+#define DEFUALT_CPGM_NAME "test_encoded.txt"
 
 /**
  * (1) Data types and structures.
@@ -302,7 +304,7 @@ bool validateCPGM(CPGM* cpgm) {
     updateEntry(entry, cpgm, j);
     pixelCount += entry->runlength;
 
-    if (entry->pixel < 0 || entry->pixel > cpgm->maxValue) {
+    if (entry->pixel > cpgm->maxValue) {
       printf("Error: Color %d is out of bound of CPGM color range (0~%d).\n", entry->pixel, cpgm->maxValue);
       return false;
     }
@@ -761,8 +763,8 @@ char* scanLine() {
 
 void help() {
   printf("---------------------------------------------------------------------------------------------------------------\n");
-  printf("$ %-45s %s\n", "compress <input.pgm> [<output.cpgm>]", "- will compress pgm to cpgm (default output = text_encoded.txt)");
-  printf("$ %-45s %s\n", "decompress <input.cpgm> [<output.pgm>]", "- will compress cpgm to pgm (default output = text_decoded.pgm)");
+  printf("$ %-45s %s\n", "compress <input.pgm> [<output.cpgm>]", "- will compress pgm to cpgm (default output = "DEFUALT_CPGM_NAME")");
+  printf("$ %-45s %s\n", "decompress <input.cpgm> [<output.pgm>]", "- will compress cpgm to pgm (default output = "DEFAULT_PGM_NAME")");
   printf("$ %-45s %s\n", "replacecolor <prev> <next> <input.cpgm>", "- will replace all <prev> colors with <next> color");
   printf("$ %-45s %s\n", "setcolor <row> <column> <color> <input.cpgm>", "- will change color of position with given <color>");
   printf("$ %-45s %s\n", "histogram <input.cpgm>", "- show histogram of given cpgm");
@@ -786,7 +788,7 @@ void menu_compress() {
   }
 
   if (output == NULL) {
-    output = "text_encoded.txt";
+    output = DEFUALT_CPGM_NAME;
   }
 
   PGM* pgm = readPGM(input);
@@ -798,7 +800,7 @@ void menu_compress() {
   freeCPGM(cpgm);
   freePGM(pgm);
 
-  printf("-> %s successfully compressed and saved to %s.\n", input, output);
+  printf("-> %s successfully compressed and saved to %s\n", input, output);
 }
 
 void menu_decompress() {
@@ -811,7 +813,7 @@ void menu_decompress() {
   }
 
   if (output == NULL) {
-    output = "text_decoded.pgm";
+    output = DEFAULT_PGM_NAME;
   }
 
   CPGM* cpgm = readCPGM(input);
@@ -823,7 +825,7 @@ void menu_decompress() {
   freeCPGM(cpgm);
   freePGM(pgm);
 
-  printf("-> %s successfully decompressed and saved to %s.\n", input, output);
+  printf("-> %s successfully decompressed and saved to %s\n", input, output);
 }
 
 void menu_replacecolor() {
