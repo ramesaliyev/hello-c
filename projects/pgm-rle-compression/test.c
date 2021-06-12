@@ -102,6 +102,11 @@ void testP2ReplaceColorSingle() {
   assert(cpgm->entryCount == 1, "Should have only one color.");
   assert(cpgm->blocks[2] == 199, "Should replace single color.");
 
+  replaceColor(cpgm, 0, 255); // Color does not exist
+  assert(cpgm->blockCount == 3, "Should have only one color.");
+  assert(cpgm->entryCount == 1, "Should have only one color.");
+  assert(cpgm->blocks[2] == 199, "Should replace single color.");
+
   freePGM(pgm);
   freeCPGM(cpgm);
 }

@@ -31,6 +31,8 @@
  * (0) Program configuration definitions.
  */
 #define LINESIZE 256
+#define NLCHR '\n'
+#define NLSTR "\n"
 #define MAX_COLOR 255
 #define P5 "P5"
 #define P2 "P2"
@@ -106,7 +108,7 @@ int max(int a, int b) {
 FILE* openFile(char* filename, char* as) {
   FILE* file = fopen(filename, as);
   if (file == NULL) {
-    printf("Error: Could not open file; name=%s, mode=%s", filename, as);
+    printf("Error: Could not open file; name=%s, mode=%s\n", filename, as);
     return NULL;
   };
   return file;
@@ -705,14 +707,241 @@ void printHistogram(CPGM* cpgm) {
 /**
  * (6) Interface operations
  */
+char* scanLine() {
+  char* input = mallocstr(LINESIZE);
+  fgets(input, LINESIZE, stdin);
+
+  if (input[strlen(input)-1] != NLCHR) {
+    int ch;
+    while (((ch = getchar()) != NLCHR) && (ch != EOF));
+  }
+
+  if (strcmp(input, NLSTR) == 0) {
+    strcpy(input, "");
+  } else if (strcmp(input, " \n") == 0) {
+    strcpy(input, "");
+  } else {
+    input[strcspn(input, "\r\n")] = 0;
+  }
+
+  return input;
+}
+
+void help() {
+  printf("---------------------------------------------------------------------------------------------------------------\n");
+  printf("$ %-45s %s\n", "compress <input.pgm> [<output.cpgm>]", "- will compress pgm to cpgm (default output = text_encoded.txt)");
+  printf("$ %-45s %s\n", "decompress <input.cpgm> [<output.pgm>]", "- will compress cpgm to pgm (default output = text_decoded.pgm)");
+  printf("$ %-45s %s\n", "replacecolor <prev> <next> <input.cpgm>", "- will replace all <prev> colors with <next> color");
+  printf("$ %-45s %s\n", "setcolor <row> <column> <color> <input.cpgm>", "- will change color of position with given <color>");
+  printf("$ %-45s %s\n", "histogram <input.cpgm>", "- show histogram of given cpgm");
+  printf("$ %-45s %s\n", "convert <format> <input.pgm> <output.pgm>", "- will convert pgm file to given <format> (P2 or P5)");
+  printf("$ %-45s %s\n", "help", "- display this message");
+  printf("$ %-45s %s\n", "exit", "- exit from program");
+  printf("---------------------------------------------------------------------------------------------------------------\n");
+}
+
+void print_incorrect_args() {
+  printf("Error: Incorrect arguments, please check your arguments, type 'help' to see usages!\n");
+}
+
+void menu_compress() {
+  char* input = strtok(NULL, " ");
+  char* output = strtok(NULL, " ");
+  
+  if (input == NULL) {
+    print_incorrect_args();
+    return;
+  }
+
+  if (output == NULL) {
+    output = "text_encoded.txt";
+  }
+
+  PGM* pgm = readPGM(input);
+  if (pgm == NULL) return;
+  CPGM* cpgm = compressPGM(pgm);
+  if (cpgm == NULL) return;
+
+  writeCPGM(cpgm, output);
+  freeCPGM(cpgm);
+  freePGM(pgm);
+
+  printf("-> %s successfully compressed and saved to %s.\n", input, output);
+}
+
+void menu_decompress() {
+  char* input = strtok(NULL, " ");
+  char* output = strtok(NULL, " ");
+
+  if (input == NULL) {
+    print_incorrect_args();
+    return;
+  }
+
+  if (output == NULL) {
+    output = "text_decoded.pgm";
+  }
+
+  CPGM* cpgm = readCPGM(input);
+  if (cpgm == NULL) return;
+  PGM* pgm = decompressCPGM(cpgm);
+  if (pgm == NULL) return;
+
+  writePGM(pgm, output);
+  freeCPGM(cpgm);
+  freePGM(pgm);
+
+  printf("-> %s successfully decompressed and saved to %s.\n", input, output);
+}
+
+void menu_replacecolor() {
+  char* prev = strtok(NULL, " ");
+  char* next = strtok(NULL, " ");
+  char* input = strtok(NULL, " ");
+
+  if (prev == NULL || next == NULL || input == NULL) {
+    print_incorrect_args();
+    return;
+  }
+
+  int prevColor = atoi(prev);
+  int nextColor = atoi(next);
+
+  CPGM* cpgm = readCPGM(input);
+  if (cpgm == NULL) return;
+
+  if (prevColor < 0 || prevColor > cpgm->maxValue || nextColor < 0 || nextColor > cpgm->maxValue) {
+    printf("Error: Given color values are out of bounds (0~%d) of PGM.\n", cpgm->maxValue);
+    freeCPGM(cpgm);
+    return;
+  }
+
+  replaceColor(cpgm, prevColor, nextColor);
+
+  writeCPGM(cpgm, input);
+  freeCPGM(cpgm);
+
+  printf("-> %d colors in %s successfully replaced with %d.\n", prevColor, input, nextColor);
+}
+
+void menu_setcolor() {
+  char* row = strtok(NULL, " ");
+  char* column = strtok(NULL, " ");
+  char* color = strtok(NULL, " ");
+  char* input = strtok(NULL, " ");
+
+  if (row == NULL || column == NULL || color == NULL || input == NULL) {
+    print_incorrect_args();
+    return;
+  }
+
+  int rowInt = atoi(row);
+  int columnInt = atoi(column);
+  int colorInt = atoi(color);
+
+  CPGM* cpgm = readCPGM(input);
+  if (cpgm == NULL) return;
+
+  if (colorInt < 0 || colorInt > cpgm->maxValue) {
+    printf("Error: Given color value are out of bounds (0~%d) of PGM.\n", cpgm->maxValue);
+    freeCPGM(cpgm);
+    return;
+  }
+
+  if (rowInt >= cpgm->width || columnInt >= cpgm->height || rowInt < 0 || columnInt < 0) {
+    printf("Error: Given coordinates are out of dimensions (%dx%d) of PGM.\n", cpgm->width, cpgm->height);
+    freeCPGM(cpgm);
+    return;
+  }
+
+  setColor(cpgm, rowInt, columnInt, colorInt);
+
+  writeCPGM(cpgm, input);
+  freeCPGM(cpgm);
+
+  printf("-> Color at row=%d column=%d successfully set as %d in %s.\n", rowInt, columnInt, colorInt, input);
+}
+
+void menu_histogram() {
+  char* input = strtok(NULL, " ");
+
+  if (input == NULL) {
+    print_incorrect_args();
+    return;
+  }
+
+  CPGM* cpgm = readCPGM(input);
+  if (cpgm == NULL) return;
+
+  printHistogram(cpgm);
+  freeCPGM(cpgm);
+}
+
+void menu_convert() {
+  char* type = strtok(NULL, " ");
+  char* input = strtok(NULL, " ");
+  char* output = strtok(NULL, " ");
+
+  if (type == NULL || input == NULL || output == NULL) {
+    print_incorrect_args();
+    return;
+  }
+
+  if (strcmp(type, P5) && strcmp(type, P2)) {
+    printf("Error: Incorrect target PGM type, it should be either "P5" or "P2". Given type: %s\n", type);
+    return;
+  }
+
+  PGM* pgm = readPGM(input);
+  if (pgm == NULL) return;
+
+  writePGMWithType(pgm, output, type);
+  freePGM(pgm);
+
+  printf("-> %s successfully rewrited in %s type to %s.\n", input, type, output);
+}
 
 /**
  * (7) Main
  */
 #ifndef TEST_MODE
 int main() {
-  printf("Hello from main!\n");
+  printf("-------------------------------------\n");
+  printf("Welcome to PGM Lemonizer 2021\n");
+  printf("Available commands are listed bellow:\n");
+  help();
+  
+  while(true) {
+    printf("$ ");
+    char* line = scanLine();
+    
+    if (strcmp(line, "") != 0) {
+      char* cmd = strtok(line, " ");
 
+      if (strcmp(cmd, "compress") == 0) {
+        menu_compress();
+      } else if (strcmp(cmd, "decompress") == 0) {
+        menu_decompress();
+      } else if (strcmp(cmd, "replacecolor") == 0) {
+        menu_replacecolor();
+      } else if (strcmp(cmd, "setcolor") == 0) {
+        menu_setcolor();
+      } else if (strcmp(cmd, "histogram") == 0) {
+        menu_histogram();
+      } else if (strcmp(cmd, "convert") == 0) {
+        menu_convert();
+      } else if (strcmp(cmd, "help") == 0) {
+        help();
+      } else if (strcmp(cmd, "exit") == 0) {
+        break;
+      } else {
+        printf("Error: Unknown command '%s'\n", cmd);
+      }
+    }
+
+    free(line);
+  }
+  
   return 0;
 }
 #endif
