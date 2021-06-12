@@ -191,7 +191,7 @@ PGM* readPGM(char* filepath) {
   PGM* pgm = createPGM(pgmType, maxValue, width, height);
 
   if (pgm == NULL) {
-    printf("Error: Cannot read PGM due to memory allocation issues.");
+    printf("Error: Cannot read PGM due to memory allocation issues.\n");
     return NULL;
   }
 
@@ -203,10 +203,16 @@ PGM* readPGM(char* filepath) {
     fread(pgm->pixels, sizeof(Pixel), pixelCount, file);
   } else {
     // Read P2
-    int i;
+    int i, color;
     for (i = 0; i < pixelCount; i++) {
       skipWhitespace(file);
-      fscanf(file, "%hhu", &(pgm->pixels[i]));
+      fscanf(file, "%d", &(color));
+      pgm->pixels[i] = color;
+
+      if (color < 0 || color > pgm->maxValue) {
+        printf("Error: Out of bound (0~%d) value %d read as color from PGM.\n", pgm->maxValue, color);
+        return NULL;        
+      }
     }
   }
 
