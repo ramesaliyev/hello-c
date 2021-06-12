@@ -598,7 +598,7 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
   }
 
   // Continue with next node.
-  if (offset < cpgm->entryCount) {
+  if (offset < cpgm->entryCount - 1) {
     input->prevRunLength += entry->runlength;
     entryProcessor(input, cpgm, ++offset, processor, data);
   }
