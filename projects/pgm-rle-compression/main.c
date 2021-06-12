@@ -6,15 +6,24 @@
 #include <ctype.h>
 
 /**
+ * README
+ * 
+ * - Both P5 and P2 format supported as input.
+ * - Output file of decoded PGM will be in it's original format.
+ *   For example if your original PGM was P2, after encoding and 
+ *   code will output PGM in P2 format. If it was P5, output also
+ *   will be P5.
+ * - Encoded PGM files (CPGMs) has their own format in binary.
+ * 
  * Code structure:
- * Search for (x) to go section.
+ * Search like (x) to jump directly to section.
  * 
  * (0) Program configuration definitions.
  * (1) Data types and structures.
  * (2) Common generic utilities.
  * (3) PGM related functions.
  * (4) Compress / Decompress
- * (5) Operations on compressed file.
+ * (5) Operations on compressed data.
  * (6) Interface operations
  * (7) Main
  */
@@ -39,6 +48,10 @@ typedef uint8_t Block;
 typedef struct PGM PGM;
 typedef struct CPGM CPGM;
 typedef struct Entry Entry;
+typedef struct EntryNode EntryNode;
+typedef struct ProcessorInput ProcessorInput;
+
+typedef EntryNode* (*SequentialProcessor)(ProcessorInput*, void*);
 
 struct PGM {
   char* type;
@@ -52,6 +65,7 @@ struct CPGM {
   char* pgmType;
   Block* blocks;
   int blockCount;
+  int entryCount;
   int maxValue;
   int width;
   int height;
@@ -60,6 +74,17 @@ struct CPGM {
 struct Entry {
   RunLength runlength;
   Pixel pixel;
+};
+
+struct EntryNode {
+  Entry* entry;
+  EntryNode* next;
+  EntryNode* prev;
+};
+
+struct ProcessorInput {
+  Entry* entry;
+  int prevRunLength;
 };
 
 /**
@@ -73,6 +98,10 @@ char* copystr(char* str) {
   char* copy = mallocstr(strlen(str));
   if (copy) strcpy(copy, str);
   return copy;
+}
+
+int max(int a, int b) {
+  return a > b ? a : b;
 }
 
 FILE* openFile(char* filename, char* as) {
@@ -176,9 +205,7 @@ PGM* readPGM(char* filepath) {
     int i, color;
     for (i = 0; i < pixelCount; i++) {
       skipWhitespace(file);
-      fscanf(file, "%d", &(color));
-      pgm->pixels[i] = (Pixel) color;
-      printf("%d %d\n", color, pgm->pixels[i]);
+      fscanf(file, "%hhu", &(pgm->pixels[i]));
     }
   }
 
@@ -220,7 +247,7 @@ void writePGM(PGM* pgm, char* filepath) {
   writePGMWithType(pgm, filepath, pgm->type);
 }
 
-void destroyPGM(PGM* pgm) {
+void freePGM(PGM* pgm) {
   free(pgm->type);
   free(pgm->pixels);
   free(pgm);
@@ -229,14 +256,18 @@ void destroyPGM(PGM* pgm) {
 /**
  * (4) Compress / Decompress
  */
-Entry* createEntry() {
-  return (Entry*) malloc(sizeof(Entry));
+Entry* createEntry(Pixel pixel) {
+  Entry* entry = (Entry*) malloc(sizeof(Entry));
+  entry->runlength = 0;
+  entry->pixel = pixel;
+  return entry;
 }
 
 void updateEntry(Entry* entry, CPGM* cpgm, int offset) {
-  Block rlLSB = cpgm->blocks[offset];
-  Block rlMSB = cpgm->blocks[offset + 1];
-  entry->pixel = cpgm->blocks[offset + 2];
+  int index = offset * BLOCK_PER_ENTRY; 
+  Block rlLSB = cpgm->blocks[index];
+  Block rlMSB = cpgm->blocks[index + 1];
+  entry->pixel = cpgm->blocks[index + 2];
   entry->runlength = (rlMSB << 8) | rlLSB;
 }
 
@@ -245,12 +276,12 @@ void freeEntry(Entry* entry) {
 }
 
 void insertBlock(Block* blocks, RunLength runlength, Pixel pixel, int offset) {
+  int index = offset * BLOCK_PER_ENTRY; 
   Block rlLSB = runlength & 0xFF;
   Block rlMSB = runlength >> 8;
-
-  blocks[(offset * BLOCK_PER_ENTRY)] = rlLSB;
-  blocks[(offset * BLOCK_PER_ENTRY) + 1] = rlMSB;
-  blocks[(offset * BLOCK_PER_ENTRY) + 2] = pixel;
+  blocks[index] = rlLSB;
+  blocks[index + 1] = rlMSB;
+  blocks[index + 2] = pixel;
 }
 
 bool validateCPGM(CPGM* cpgm) {
@@ -277,6 +308,7 @@ CPGM* createCPGM(int blockCount, char* pgmType, int maxValue, int width, int hei
 
   cpgm->pgmType = copystr(pgmType);
   cpgm->blockCount = blockCount;
+  cpgm->entryCount = blockCount / BLOCK_PER_ENTRY;
   cpgm->maxValue = maxValue;
   cpgm->width = width;
   cpgm->height = height;
@@ -337,16 +369,15 @@ PGM* decompressCPGM(CPGM* cpgm) {
     return NULL;
   }
   
-  Entry* entry = createEntry();
+  Entry* entry = createEntry(0);
   PGM* pgm = createPGM(cpgm->pgmType, cpgm->maxValue, cpgm->width, cpgm->height);
 
-  int i = 0;
+  int prevRunLength = 0;
   int j;
-  for (j = 0; j < cpgm->blockCount; j += 3) {
+  for (j = 0; j < cpgm->entryCount; j++) {
     updateEntry(entry, cpgm, j);
-
-    memset(pgm->pixels + i, entry->pixel, entry->runlength);
-    i += entry->runlength;
+    memset(pgm->pixels + prevRunLength, entry->pixel, entry->runlength);
+    prevRunLength += entry->runlength;
   }
 
   freeEntry(entry);
@@ -416,7 +447,7 @@ void writeCPGM(CPGM* cpgm, char* filepath) {
   fclose(file);
 }
 
-void destroyCPGM(CPGM* cpgm) {
+void freeCPGM(CPGM* cpgm) {
   free(cpgm->pgmType);
   free(cpgm->blocks);
   free(cpgm);
@@ -425,12 +456,233 @@ void destroyCPGM(CPGM* cpgm) {
 /**
  * (5) Operations on compressed file.
  */
+EntryNode* createEntryNode(Pixel pixel) {
+  EntryNode* entryList = (EntryNode*) malloc(sizeof(EntryNode));
+  entryList->entry = createEntry(pixel);
+  entryList->entry->runlength = 0;
+  entryList->next = NULL;
+  entryList->prev = NULL;
+  return entryList;
+}
+
+EntryNode* createEntryList(Pixel pixel) {
+  EntryNode* head = createEntryNode(pixel);
+  head->next = createEntryNode(pixel);
+  head->next->next = createEntryNode(pixel);
+  return head;
+}
+
+void printEntryList(EntryNode* head) {
+  EntryNode* curr = head;
+
+  while (curr != NULL) {
+    printf("(%d,%d)\n", curr->entry->runlength, curr->entry->pixel);
+    curr = curr->next;
+  }
+}
+
+void freeEntryNode(EntryNode* entryNode) {
+  freeEntry(entryNode->entry);
+  free(entryNode);
+}
+
+void freeEntryList(EntryNode* entryNode) {
+  EntryNode* tmp;
+  while((tmp = entryNode->next) != NULL) {
+    freeEntryNode(entryNode);
+    entryNode = tmp;
+  }
+  freeEntryNode(entryNode);
+}
+
+void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialProcessor processor, void* data) {
+  Entry* entry = input->entry;
+
+  // Get entry.
+  updateEntry(entry, cpgm, offset);
+
+  // Should we update?
+  EntryNode* updateList = processor(input, data);
+  if (updateList != NULL) {
+    // Create full list.
+    EntryNode* head = updateList;
+    EntryNode* last = head;
+    EntryNode* tmp;
+
+    int blockCount = cpgm->blockCount;
+    int entryCount = cpgm->entryCount;
+    int affectedSourceNode = 1;
+    int updateListSize = 1;
+
+    // Findout update list length and last item.
+    while(last->next != NULL) {
+      updateListSize++;
+      last = last->next;
+    }
+
+    // If not first node, get previous.
+    if (offset - 1 >= 0) {
+      head = createEntryNode(0);
+      head->next = updateList;
+      updateEntry(head->entry, cpgm, offset - 1);
+      updateListSize++;
+      affectedSourceNode++;
+    }
+
+    // If not last node, get next.
+    if (offset + 1 < entryCount) {
+      last->next = createEntryNode(0);
+      updateEntry(last->next->entry, cpgm, offset + 1);
+      updateListSize++;
+      affectedSourceNode++;
+    }
+
+    // Now we'll clear nodes that repeating or has zero runlength.
+    tmp = head;
+
+    // Clear & merge head node.
+    if (tmp->entry->runlength == 0) {
+      tmp = tmp->next; 
+      freeEntryNode(head);
+      head = tmp;
+    }
+
+    // Clear & merge the res & count target range.
+    int targetUpdateRange = 1;
+    while (tmp->next != NULL) {
+      EntryNode* next = tmp->next;
+
+      if (next->entry->runlength == 0) {
+        tmp->next = next->next;
+        freeEntryNode(next);
+      } else if (tmp->entry->pixel == next->entry->pixel) {
+        tmp->entry->runlength += next->entry->runlength;
+        tmp->next = next->next;
+        freeEntryNode(next);
+      } else {
+        targetUpdateRange++;
+        tmp = tmp->next;
+      }
+    }
+
+    // Now we will insert updated blocks in place.
+    int sourceUpdateRange = affectedSourceNode;
+    int updatedEntryCount = entryCount - sourceUpdateRange + targetUpdateRange;
+    int updatedBlockCount = updatedEntryCount * BLOCK_PER_ENTRY;
+    int insertOffset = max(0, offset - 1);
+
+    // Resize blocks if needed.
+    if (entryCount != updatedEntryCount) {
+      Block* blocks = (Block*) calloc(updatedBlockCount, sizeof(Block));
+
+      // Do index calculations.
+      int leftEnd = insertOffset * BLOCK_PER_ENTRY;
+      int targetRightStart = leftEnd + (BLOCK_PER_ENTRY * targetUpdateRange);
+      int sourceRightStart = leftEnd + (BLOCK_PER_ENTRY * sourceUpdateRange);
+
+      // Copy left and right parts of affected data.
+      memmove(blocks, cpgm->blocks, leftEnd);
+      memmove(blocks + targetRightStart, cpgm->blocks + sourceRightStart, blockCount - sourceRightStart);
+
+      // Replace source.
+      free(cpgm->blocks);
+      cpgm->blocks = blocks;
+      cpgm->blockCount = updatedBlockCount;
+      cpgm->entryCount = updatedEntryCount;
+    }
+
+    // Insert new data in place.
+    tmp = head;
+    while (tmp != NULL) {
+      insertBlock(cpgm->blocks, tmp->entry->runlength, tmp->entry->pixel, insertOffset);
+
+      tmp = tmp->next;
+      insertOffset++;
+    }
+
+    // Clear and continue.
+    freeEntryList(head);
+    offset = insertOffset - 1;
+  }
+
+  if (offset < cpgm->entryCount) {
+    input->prevRunLength += entry->runlength;
+    entryProcessor(input, cpgm, ++offset, processor, data);
+  }
+}
+
+void processEntries(CPGM* cpgm, SequentialProcessor processor, void* data) {
+  ProcessorInput* input = (ProcessorInput*) malloc(sizeof(ProcessorInput));
+  input->prevRunLength = 0;
+  input->entry = createEntry(0);
+
+  entryProcessor(input, cpgm, 0, processor, data);
+  free(input);
+}
+
+EntryNode* replaceColorProcessor(ProcessorInput* input, void* args) {
+  Pixel* colors = (Pixel*) args;
+  Pixel prevColor = colors[0];
+  Pixel nextColor = colors[1];
+  
+  Entry* entry = input->entry;
+  if (entry->pixel == prevColor) {
+    EntryNode* node = createEntryNode(nextColor);
+    node->entry->runlength = entry->runlength;
+    return node;
+  }
+
+  return NULL;
+}
+
+void replaceColor(CPGM* cpgm, Pixel prevColor, Pixel nextColor) {
+  Pixel args[] = {prevColor, nextColor};
+  processEntries(cpgm, replaceColorProcessor, args);
+}
+
+EntryNode* setColorProcessor(ProcessorInput* input, void* data) {
+  int* args = (int *) data;
+  int position = args[0];
+  int newColor = args[1]; 
+
+  Entry* entry = input->entry;
+  int leftBound = input->prevRunLength;
+  int rightBound = leftBound + entry->runlength;
+
+  // Position is in this block.
+  if (position > leftBound && position <= rightBound) {
+    // Create new list.
+    EntryNode* prev = createEntryList(entry->pixel);
+    EntryNode* node = prev->next;
+    EntryNode* next = node->next;
+
+    // Set color.
+    node->entry->pixel = newColor;
+
+    // Adjust runlengths.
+    int index = position - input->prevRunLength;
+    prev->entry->runlength = index - 1;
+    node->entry->runlength = 1;
+    next->entry->runlength = entry->runlength - index;
+
+    return prev;
+  }
+
+  return NULL;
+}
+
+void setColor(CPGM* cpgm, int row, int column, Pixel color) {
+  int pos = (row * cpgm->width) + column + 1;
+  int args[] = {pos, color};
+  processEntries(cpgm, setColorProcessor, args);
+}
+
 void printHistogram(CPGM* cpgm) {
   RunLength colors[MAX_COLOR + 1] = {0};
-  Entry* entry = createEntry();
+  Entry* entry = createEntry(0);
 
   int j;
-  for (j = 0; j < cpgm->blockCount; j += 3) {
+  for (j = 0; j < cpgm->entryCount; j++) {
     updateEntry(entry, cpgm, j);
     colors[entry->pixel] += entry->runlength;
   }
@@ -464,22 +716,5 @@ void printHistogram(CPGM* cpgm) {
  * (7) Main
  */
 int main() {
-  char* input = "pgms/test.pgm";
-
-  PGM* pgm_read = readPGM(input);
-  CPGM* cpgm_original = compressPGM(pgm_read);
-
-  writeCPGM(cpgm_original, "tmp/tzest.cpgm");
-  CPGM* cpgm_read = readCPGM("tmp/tzest.cpgm");
-
-  PGM* pgm_dcomp = decompressCPGM(cpgm_original);
-  PGM* pgm_dcomp_read = decompressCPGM(cpgm_read);
-
-  writePGM(pgm_read, "tmp/test_read.pgm");
-  writePGM(pgm_dcomp, "tmp/test_dcomp.pgm");
-  writePGM(pgm_dcomp_read, "tmp/test_dcomp_read.pgm");
-
-  // printHistogram(cpgm_original);
-
   return 0;
 }
