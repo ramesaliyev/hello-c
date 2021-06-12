@@ -9,10 +9,9 @@
  * README
  * 
  * - Both P5 and P2 format supported as input.
- * - Output file of decoded PGM will be in it's original format.
- *   For example if your original PGM was P2, after encoding and 
- *   code will output PGM in P2 format. If it was P5, output also
- *   will be P5.
+ * - Output file of decompressed PGM will be in it's original format.
+ *   For example if your original PGM was P2, after compressing and 
+ *   decompressing output PGM will be in P2 format (and vice-versa). 
  * - Encoded PGM files (CPGMs) has their own format in binary.
  * 
  * Code structure:
@@ -234,7 +233,7 @@ void writePGMWithType(PGM* pgm, char* filepath, char* type) {
     fwrite(pgm->pixels, sizeof(Pixel), pixelCount, file);
   } else {
     // Write P2
-    int i, color;
+    int i;
     for (i = 0; i < pixelCount; i++) {
       fprintf(file, "%d%c", pgm->pixels[i], ((i+1) % pgm->width) ? ' ' : '\n');
     }
