@@ -506,35 +506,28 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
   if (updateList != NULL) {
     // Create full list.
     EntryNode* head = updateList;
-    EntryNode* last = head;
     EntryNode* tmp;
 
     int blockCount = cpgm->blockCount;
     int entryCount = cpgm->entryCount;
-    int affectedSourceNode = 1;
-    int updateListSize = 1;
-
-    // Findout update list length and last item.
-    while(last->next != NULL) {
-      updateListSize++;
-      last = last->next;
-    }
+    int affectedEntryCount = 1;
+    int finalEntryCount = 1;
 
     // If not first node, get previous.
     if (offset - 1 >= 0) {
       head = createEntryNode(0);
       head->next = updateList;
       updateEntry(head->entry, cpgm, offset - 1);
-      updateListSize++;
-      affectedSourceNode++;
+      affectedEntryCount++;
     }
 
     // If not last node, get next.
     if (offset + 1 < entryCount) {
+      EntryNode* last = head;
+      while(last->next != NULL) last = last->next;
       last->next = createEntryNode(0);
       updateEntry(last->next->entry, cpgm, offset + 1);
-      updateListSize++;
-      affectedSourceNode++;
+      affectedEntryCount++;
     }
 
     // Now we'll clear nodes that repeating or has zero runlength.
@@ -548,7 +541,6 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
     }
 
     // Clear & merge the res & count target range.
-    int targetUpdateRange = 1;
     while (tmp->next != NULL) {
       EntryNode* next = tmp->next;
 
@@ -560,25 +552,24 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
         tmp->next = next->next;
         freeEntryNode(next);
       } else {
-        targetUpdateRange++;
+        finalEntryCount++;
         tmp = tmp->next;
       }
     }
 
     // Now we will insert updated blocks in place.
-    int sourceUpdateRange = affectedSourceNode;
-    int updatedEntryCount = entryCount - sourceUpdateRange + targetUpdateRange;
-    int updatedBlockCount = updatedEntryCount * BLOCK_PER_ENTRY;
-    int insertOffset = max(0, offset - 1);
+    int nextEntryCount = entryCount - affectedEntryCount + finalEntryCount;
+    int nextBlockCount = nextEntryCount * BLOCK_PER_ENTRY;
+    int updateOffset = max(0, offset - 1);
 
     // Resize blocks if needed.
-    if (entryCount != updatedEntryCount) {
-      Block* blocks = (Block*) calloc(updatedBlockCount, sizeof(Block));
+    if (entryCount != nextEntryCount) {
+      Block* blocks = (Block*) calloc(nextBlockCount, sizeof(Block));
 
       // Do index calculations.
-      int leftEnd = insertOffset * BLOCK_PER_ENTRY;
-      int targetRightStart = leftEnd + (BLOCK_PER_ENTRY * targetUpdateRange);
-      int sourceRightStart = leftEnd + (BLOCK_PER_ENTRY * sourceUpdateRange);
+      int leftEnd = updateOffset * BLOCK_PER_ENTRY;
+      int targetRightStart = leftEnd + (BLOCK_PER_ENTRY * finalEntryCount);
+      int sourceRightStart = leftEnd + (BLOCK_PER_ENTRY * affectedEntryCount);
 
       // Copy left and right parts of affected data.
       memmove(blocks, cpgm->blocks, leftEnd);
@@ -587,22 +578,27 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
       // Replace source.
       free(cpgm->blocks);
       cpgm->blocks = blocks;
-      cpgm->blockCount = updatedBlockCount;
-      cpgm->entryCount = updatedEntryCount;
+      cpgm->blockCount = nextBlockCount;
+      cpgm->entryCount = nextEntryCount;
     }
 
     // Insert new data in place.
     tmp = head;
     while (tmp != NULL) {
-      insertBlock(cpgm->blocks, tmp->entry->runlength, tmp->entry->pixel, insertOffset);
+      insertBlock(
+        cpgm->blocks,
+        tmp->entry->runlength,
+        tmp->entry->pixel,
+        updateOffset
+      );
 
       tmp = tmp->next;
-      insertOffset++;
+      updateOffset++;
     }
 
     // Clear and continue.
     freeEntryList(head);
-    offset = insertOffset - 1;
+    offset = --updateOffset; // take increment back.
   }
 
   if (offset < cpgm->entryCount) {
@@ -617,6 +613,7 @@ void processEntries(CPGM* cpgm, SequentialProcessor processor, void* data) {
   input->entry = createEntry(0);
 
   entryProcessor(input, cpgm, 0, processor, data);
+  freeEntry(input->entry);
   free(input);
 }
 
