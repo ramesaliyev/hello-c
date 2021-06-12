@@ -17,10 +17,7 @@ void skip(FILE* fp){
   }
 }
 
-int main(int argc, char **argv) {
-  char* fname_a = argv[1];
-  char* fname_b = argv[2];
-
+int comparePGMFiles(char* fname_a, char* fname_b) {
   FILE* file_a = fopen(fname_a, "rb");
   FILE* file_b = fopen(fname_b, "rb");
   
@@ -89,18 +86,33 @@ int main(int argc, char **argv) {
   uint8_t* pixels_a = (uint8_t*) calloc(pixelCount, sizeof(uint8_t));
   uint8_t* pixels_b = (uint8_t*) calloc(pixelCount, sizeof(uint8_t));
 
-  fread(pixels_a, sizeof(uint8_t), pixelCount, file_a);
-  fread(pixels_b, sizeof(uint8_t), pixelCount, file_b);
+  if (strcmp(ptype_a, "P5") == 0) {
+    fread(pixels_a, sizeof(uint8_t), pixelCount, file_a);
+    fread(pixels_b, sizeof(uint8_t), pixelCount, file_b);
+  } else {
+    int i;
+    for (i = 0; i < pixelCount; i++) {
+      fscanf(file_a, "%hhu ", &(pixels_a[i]));
+      fscanf(file_b, "%hhu ", &(pixels_b[i]));
+    }
+  }
 
   if (memcmp(pixels_a, pixels_b, pixelCount) != 0) {
     printf("FU: Data mismatch.\n");
     return 1;
   }
-
+  
   printf("Aferin! PGM files are identical!\n");
 
   fclose(file_a);
   fclose(file_b);
 
   return 0;
+}
+
+int main(int argc, char **argv) {
+  char* fname_a = argv[1];
+  char* fname_b = argv[2];
+
+  return comparePGMFiles(fname_a, fname_b);
 }
