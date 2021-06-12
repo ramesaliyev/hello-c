@@ -482,6 +482,21 @@ void writeCPGM(CPGM* cpgm, char* filepath) {
   fclose(file);
 }
 
+void printCPGM(CPGM* cpgm) {
+  printf("CPGM [Type %s] [Width %d] [Height %d] [MaxValue %d] [EntryCount %d]\n", cpgm->pgmType, cpgm->width, cpgm->height, cpgm->maxValue, cpgm->entryCount);
+
+  Entry* entry = createEntry(0);
+
+  int j;
+  for (j = 0; j < cpgm->entryCount; j++) {
+    updateEntry(entry, cpgm, j);
+    printf("(%d,%d) ", entry->runlength, entry->pixel);
+  }
+  printf("\n\n");
+
+  freeEntry(entry);
+}
+
 void freeCPGM(CPGM* cpgm) {
   free(cpgm->pgmType);
   free(cpgm->blocks);
@@ -768,6 +783,7 @@ void help() {
   printf("$ %-45s %s\n", "replacecolor <prev> <next> <input.cpgm>", "- will replace all <prev> colors with <next> color");
   printf("$ %-45s %s\n", "setcolor <row> <column> <color> <input.cpgm>", "- will change color of position with given <color>");
   printf("$ %-45s %s\n", "histogram <input.cpgm>", "- show histogram of given cpgm");
+  printf("$ %-45s %s\n", "print <input.cpgm>", "- will print contents of cpgm on screen");
   printf("$ %-45s %s\n", "convert <format> <input.pgm> <output.pgm>", "- will convert pgm file to given <format> (P2 or P5)");
   printf("$ %-45s %s\n", "help", "- display this message");
   printf("$ %-45s %s\n", "exit", "- exit from program");
@@ -796,6 +812,7 @@ void menu_compress() {
   CPGM* cpgm = compressPGM(pgm);
   if (cpgm == NULL) return;
 
+  printCPGM(cpgm);  
   writeCPGM(cpgm, output);
   freeCPGM(cpgm);
   freePGM(pgm);
@@ -852,6 +869,7 @@ void menu_replacecolor() {
 
   replaceColor(cpgm, prevColor, nextColor);
 
+  printCPGM(cpgm);  
   writeCPGM(cpgm, input);
   freeCPGM(cpgm);
 
@@ -889,7 +907,8 @@ void menu_setcolor() {
   }
 
   setColor(cpgm, rowInt, columnInt, colorInt);
-
+  
+  printCPGM(cpgm);
   writeCPGM(cpgm, input);
   freeCPGM(cpgm);
 
@@ -906,8 +925,21 @@ void menu_histogram() {
 
   CPGM* cpgm = readCPGM(input);
   if (cpgm == NULL) return;
-
   printHistogram(cpgm);
+  freeCPGM(cpgm);
+}
+
+void menu_print() {
+  char* input = strtok(NULL, " ");
+
+  if (input == NULL) {
+    print_incorrect_args();
+    return;
+  }
+
+  CPGM* cpgm = readCPGM(input);
+  if (cpgm == NULL) return;
+  printCPGM(cpgm);
   freeCPGM(cpgm);
 }
 
@@ -962,6 +994,8 @@ int main() {
         menu_setcolor();
       } else if (strcmp(cmd, "histogram") == 0) {
         menu_histogram();
+      } else if (strcmp(cmd, "print") == 0) {
+        menu_print();
       } else if (strcmp(cmd, "convert") == 0) {
         menu_convert();
       } else if (strcmp(cmd, "help") == 0) {
