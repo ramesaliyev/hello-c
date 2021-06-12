@@ -100,9 +100,7 @@ int comparePGMFiles(char* fname_a, char* fname_b) {
   if (memcmp(pixels_a, pixels_b, pixelCount) != 0) {
     printf("FU: Data mismatch.\n");
     return 1;
-  }
-  
-  printf("Aferin! PGM files are identical!\n");
+  } 
 
   fclose(file_a);
   fclose(file_b);
@@ -114,5 +112,11 @@ int main(int argc, char **argv) {
   char* fname_a = argv[1];
   char* fname_b = argv[2];
 
-  return comparePGMFiles(fname_a, fname_b);
+  if (comparePGMFiles(fname_a, fname_b)) {
+    return 1;
+  }
+
+  printf("Aferin! PGM files are identical!\n");
+
+  return 0;
 }

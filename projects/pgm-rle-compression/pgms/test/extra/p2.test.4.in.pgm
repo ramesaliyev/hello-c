@@ -1,0 +1,17 @@
+P2
+# Intense test
+# compress and decompress
+# set pixel at (1,0) to 10
+# set pixel at (0,0) to 0
+# set pixel at (2,3) to 0
+# change 10s to 0s
+# RLE: 4 10 1 0 7 10
+4 3
+255
+10 
+10
+	10	10
+ 0
+ 10	10 10
+10	10
+10 10

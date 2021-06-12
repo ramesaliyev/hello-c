@@ -1,8 +1,9 @@
 #include "main.c"
+#include "tools/compare_pgms.c"
 
 /**
  * To run tests, change main function name
- * to something else in main.c  
+ * to something else in included files.  
  */
 
 int testCount = 0;
@@ -430,6 +431,71 @@ void testP2SetColorSplitMerge() {
   freeCPGM(cpgm);
 }
 
+void testP2SomeExtraCases1() {
+  PGM* pgm = readPGM("pgms/test/extra/p2.test.1.in.pgm");
+  CPGM* cpgm = compressPGM(pgm);
+  setColor(cpgm, 0, 3, 100);
+  replaceColor(cpgm, 50, 100);
+  replaceColor(cpgm, 100, 50);
+  PGM* pgm2 = decompressCPGM(cpgm);
+  writePGM(pgm2, "tmp/test/p2.test.1.out.pgm");
+  assert(cpgm->entryCount == 3, "Should have correct entry count.");
+  assert(
+    comparePGMFiles("tmp/test/p2.test.1.out.pgm", "pgms/test/extra/p2.test.1.out.pgm") == 0,
+    "Output PGM should be correct."
+  );
+  freeCPGM(cpgm);
+  freePGM(pgm);
+  freePGM(pgm2);
+}
+
+void testP2SomeExtraCases2() {
+  PGM* pgm = readPGM("pgms/test/extra/p2.test.2.in.pgm");
+  CPGM* cpgm = compressPGM(pgm);
+  PGM* pgm2 = decompressCPGM(cpgm);
+  writePGM(pgm2, "tmp/test/p2.test.2.out.pgm");
+  assert(
+    comparePGMFiles("tmp/test/p2.test.2.out.pgm", "pgms/test/extra/p2.test.2.out.pgm") == 0,
+    "Output PGM should be correct."
+  );
+  freeCPGM(cpgm);
+  freePGM(pgm);
+  freePGM(pgm2);
+}
+
+void testP2SomeExtraCases3() {
+  PGM* pgm = readPGM("pgms/test/extra/p2.test.3.in.pgm");
+  CPGM* cpgm = compressPGM(pgm);
+  setColor(cpgm, 0, 2, 10);
+  PGM* pgm2 = decompressCPGM(cpgm);
+  writePGM(pgm2, "tmp/test/p2.test.3.out.pgm");
+  assert(
+    comparePGMFiles("tmp/test/p2.test.3.out.pgm", "pgms/test/extra/p2.test.3.out.pgm") == 0,
+    "Output PGM should be correct."
+  );
+  freeCPGM(cpgm);
+  freePGM(pgm);
+  freePGM(pgm2);
+}
+
+void testP2SomeExtraCases4() {
+  PGM* pgm = readPGM("pgms/test/extra/p2.test.4.in.pgm");
+  CPGM* cpgm = compressPGM(pgm);
+  setColor(cpgm, 1, 0, 10);
+  setColor(cpgm, 0, 0, 0);
+  setColor(cpgm, 2, 3, 0);
+  replaceColor(cpgm, 10, 0);
+  PGM* pgm2 = decompressCPGM(cpgm);
+  writePGM(pgm2, "tmp/test/p2.test.4.out.pgm");
+  assert(
+    comparePGMFiles("tmp/test/p2.test.4.out.pgm", "pgms/test/extra/p2.test.4.out.pgm") == 0,
+    "Output PGM should be correct."
+  );
+  freeCPGM(cpgm);
+  freePGM(pgm);
+  freePGM(pgm2);
+}
+
 int main() {
   // testP2Read();
   // testP2ReadWriteRead();
@@ -451,6 +517,10 @@ int main() {
   testP2SetColorMergeMiddleWithSurrounding();
   testP2SetColorSplitEntry();
   testP2SetColorSplitMerge();
+  testP2SomeExtraCases1();
+  testP2SomeExtraCases2();
+  testP2SomeExtraCases3();
+  testP2SomeExtraCases4();
 
   printf("Success: %d (all) asserts are passed.\n", testCount);
   return 0;

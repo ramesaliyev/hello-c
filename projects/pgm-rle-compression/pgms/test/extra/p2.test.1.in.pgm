@@ -1,0 +1,11 @@
+P2
+# Test handling swapping pixels
+# set pixel at (0,3) to 100
+# change all 50s to 100s
+# change all 100s to 50s
+# RLE: 3 100 1 50 1 100 3 50 1 25 3 0
+4 3
+255
+100 100 100 50
+100 50 50 50
+25 0 0 0

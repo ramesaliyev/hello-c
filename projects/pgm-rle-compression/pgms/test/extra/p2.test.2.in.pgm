@@ -1,0 +1,15 @@
+P2
+# Test handling whitespace
+# Compress and decompress
+# RLE: 3 10 2 40 3 255 1 25 3 0
+4 3
+255
+10 10
+10
+
+	40
+   40
+   	255   255 255
+25
+0 0
+	0
