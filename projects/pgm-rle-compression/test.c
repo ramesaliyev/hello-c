@@ -1,10 +1,6 @@
+#define TEST_MODE
 #include "main.c"
 #include "tools/compare_pgms.c"
-
-/**
- * To run tests, change main function name
- * to something else in included files.  
- */
 
 int testCount = 0;
 void assert(bool passed, char* error) {

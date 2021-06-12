@@ -710,6 +710,10 @@ void printHistogram(CPGM* cpgm) {
 /**
  * (7) Main
  */
+#ifndef TEST_MODE
 int main() {
+  printf("Hello from main!\n");
+
   return 0;
 }
+#endif

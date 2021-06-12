@@ -108,6 +108,7 @@ int comparePGMFiles(char* fname_a, char* fname_b) {
   return 0;
 }
 
+#ifndef TEST_MODE
 int main(int argc, char **argv) {
   char* fname_a = argv[1];
   char* fname_b = argv[2];
@@ -120,3 +121,4 @@ int main(int argc, char **argv) {
 
   return 0;
 }
+#endif
