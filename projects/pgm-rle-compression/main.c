@@ -501,17 +501,19 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
   // Get entry.
   updateEntry(entry, cpgm, offset);
 
-  // Should we update?
+  // Pass current node to processor.
   EntryNode* updateList = processor(input, data);
-  if (updateList != NULL) {
-    // Create full list.
-    EntryNode* head = updateList;
-    EntryNode* tmp;
 
+  // Should we update?
+  if (updateList != NULL) {
     int blockCount = cpgm->blockCount;
     int entryCount = cpgm->entryCount;
     int affectedEntryCount = 1;
     int finalEntryCount = 1;
+
+    // Create full list.
+    EntryNode* head = updateList;
+    EntryNode* tmp;
 
     // If not first node, get previous.
     if (offset - 1 >= 0) {
@@ -530,7 +532,8 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
       affectedEntryCount++;
     }
 
-    // Now we'll clear nodes that repeating or has zero runlength.
+    // Now we'll clear nodes of repeating colors and
+    // ones that has zero runlength.
     tmp = head;
 
     // Clear & merge head node.
@@ -540,7 +543,7 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
       head = tmp;
     }
 
-    // Clear & merge the res & count target range.
+    // Clear & merge the rest, and count final entry count.
     while (tmp->next != NULL) {
       EntryNode* next = tmp->next;
 
@@ -585,22 +588,17 @@ void entryProcessor(ProcessorInput* input, CPGM* cpgm, int offset, SequentialPro
     // Insert new data in place.
     tmp = head;
     while (tmp != NULL) {
-      insertBlock(
-        cpgm->blocks,
-        tmp->entry->runlength,
-        tmp->entry->pixel,
-        updateOffset
-      );
-
+      insertBlock(cpgm->blocks, tmp->entry->runlength, tmp->entry->pixel, updateOffset);
       tmp = tmp->next;
       updateOffset++;
     }
 
     // Clear and continue.
     freeEntryList(head);
-    offset = --updateOffset; // take increment back.
+    offset = --updateOffset; // take last (wrong) increment back.
   }
 
+  // Continue with next node.
   if (offset < cpgm->entryCount) {
     input->prevRunLength += entry->runlength;
     entryProcessor(input, cpgm, ++offset, processor, data);
