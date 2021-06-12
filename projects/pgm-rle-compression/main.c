@@ -202,7 +202,7 @@ PGM* readPGM(char* filepath) {
     fread(pgm->pixels, sizeof(Pixel), pixelCount, file);
   } else {
     // Read P2
-    int i, color;
+    int i;
     for (i = 0; i < pixelCount; i++) {
       skipWhitespace(file);
       fscanf(file, "%hhu", &(pgm->pixels[i]));
