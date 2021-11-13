@@ -57,18 +57,19 @@ void qssSwap(Point** a, Point** b) {
 
 int qssPartition(Space* space, int left, int right, PointCmp cmp) {
   Point** points = space->points;
-  Point* pivot = points[right];
-  int i = (left - 1);
-  int j;
+  Point* pivot = points[left];
+  
+  int i;
+  int j = right;
 
-  for (j = left; j <= right - 1; j++) {
-    if (cmp(points[j], pivot) < 0) { 
-      qssSwap(&points[++i], &points[j]); 
-    } 
+  for (i = left + 1; i <= j; i++) {
+    if (cmp(points[i], pivot) > 0) { 
+      qssSwap(&points[i--], &points[j--]);
+    }
   }
 
-  qssSwap(&points[i + 1], &points[right]); 
-  return (i + 1); 
+  qssSwap(&points[left], &points[j]); 
+  return j; 
 }
 
 void qss(Space* space, int left, int right, PointCmp cmp) { 
