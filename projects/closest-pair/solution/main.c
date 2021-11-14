@@ -323,12 +323,8 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY) {
 
   // Pick closest one again if strip space has even closest pair.
   if (closerPairInStripSpace != NULL) {
-    if (closerPairInStripSpace->distance < closestPair->distance) {
-      free(closestPair);
-      closestPair = closerPairInStripSpace;
-    } else {
-      free(closerPairInStripSpace);
-    }
+    free(closestPair);
+    closestPair = closerPairInStripSpace;
   }
 
   // Free temporary subspaces.

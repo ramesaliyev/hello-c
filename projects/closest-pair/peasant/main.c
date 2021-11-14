@@ -371,17 +371,10 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
   if (closerPairInStripSpace != NULL) {
     printf("%*s", indent * 3, "");
     printf("   * Got pair with %f distance from strip-space.\n", closerPairInStripSpace->distance);
-
-    if (closerPairInStripSpace->distance < closestPair->distance) {
-      printf("%*s", indent * 3, "");
-      printf("   * Using pair from strip-space since it is closer than current one with %f\n", closestPair->distance);
-      free(closestPair);
-      closestPair = closerPairInStripSpace;
-    } else {
-      printf("%*s", indent * 3, "");
-      printf("   * Not using since current pair is closer with %f\n", closestPair->distance);
-      free(closerPairInStripSpace);
-    }
+    printf("%*s", indent * 3, "");
+    printf("   * Using pair from strip-space since it is closer than current one with %f\n", closestPair->distance);
+    free(closestPair);
+    closestPair = closerPairInStripSpace;
   } else {
     printf("%*s", indent * 3, "");
     printf("   * Strip-space has no closer pair.\n");
