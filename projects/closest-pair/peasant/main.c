@@ -281,7 +281,8 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
 
     printf("%*s", indent * 3, "");
     printf("-> Count is 3 -- Doing brute-force search. (%d, %d) -> (%d, %d) = %f\n",
-      closestPair->a->x, closestPair->a->y, closestPair->b->x, closestPair->b->y, closestPair->distance
+      closestPair->a->x, closestPair->a->y, closestPair->b->x,
+      closestPair->b->y, closestPair->distance
     );
 
     return closestPair;
@@ -341,11 +342,13 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
   printf(">> Got closest pairs\n");
   printf("%*s", indent * 3, "");
   printf("   Left: (%d, %d) -> (%d, %d) = %f\n",
-    leftClosestPair->a->x, leftClosestPair->a->y, leftClosestPair->b->x, leftClosestPair->b->y, leftClosestPair->distance
+    leftClosestPair->a->x, leftClosestPair->a->y, leftClosestPair->b->x,
+    leftClosestPair->b->y, leftClosestPair->distance
   );
   printf("%*s", indent * 3, "");
   printf("   Right: (%d, %d) -> (%d, %d) = %f\n",
-    rightClosestPair->a->x, rightClosestPair->a->y, rightClosestPair->b->x, rightClosestPair->b->y, rightClosestPair->distance
+    rightClosestPair->a->x, rightClosestPair->a->y, rightClosestPair->b->x,
+    rightClosestPair->b->y, rightClosestPair->distance
   );
 
   // Pick closest one of two pairs.
@@ -365,14 +368,18 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
   printf("** Search for even closer pair in strip space.\n");
 
   // Get closest pair in strip space.
-  Pair* closerPairInStripSpace = getClosestPairInStripSubspace(spaceY, midpoint, closestPair->distance);
+  Pair* closerPairInStripSpace = getClosestPairInStripSubspace(
+    spaceY, midpoint, closestPair->distance
+  );
 
   // Pick closest one again if strip space has even closest pair.
   if (closerPairInStripSpace != NULL) {
     printf("%*s", indent * 3, "");
-    printf("   * Got pair with %f distance from strip-space.\n", closerPairInStripSpace->distance);
+    printf("   * Got pair with %f distance from strip-space.\n",
+      closerPairInStripSpace->distance);
     printf("%*s", indent * 3, "");
-    printf("   * Using pair from strip-space since it is closer than current one with %f\n", closestPair->distance);
+    printf("   * Using pair from strip-space since it is closer than current one with %f\n",
+      closestPair->distance);
     free(closestPair);
     closestPair = closerPairInStripSpace;
   } else {
@@ -389,7 +396,8 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
 
   printf("%*s", indent * 3, "");
   printf("<- Result of branch -- (%d, %d) -> (%d, %d) = %f\n",
-    closestPair->a->x, closestPair->a->y, closestPair->b->x, closestPair->b->y, closestPair->distance
+    closestPair->a->x, closestPair->a->y, closestPair->b->x,
+    closestPair->b->y, closestPair->distance
   );
 
   return closestPair;
