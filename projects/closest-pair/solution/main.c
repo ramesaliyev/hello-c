@@ -8,16 +8,34 @@
 
 /**
  * README
+ * 
+ * Please start reading code from Main (Entry Point), 
+ * and go upwards to easily follow solution flow.
+ * 
+ * Terminology:
+ * - Point: A point in our two-dimensional space (x,y).
+ * - Space: Collections of points.
+ * - Pair: Two points and their distance.
+ * 
+ * Code structure:
+ * Search like "(x)" to jump directly to section.
+ * 
+ * (1) Program configuration definitions.
+ * (2) Data types and structures.
+ * (3) QuickSort Algorithm for Space. (aka "QuickSortSpace", qss)
+ * (4) Space and Point operations.
+ * (5) Closest Pair Calculation
+ * (6) Main (Entry Point)
  */
 
 /**
- * () Program configuration definitions.
+ * (1) Program configuration definitions.
  */
 #define LINESIZE 256
 #define DEFAULT_INPUT "sample.txt"
 
 /**
- * () Data types and structures.
+ * (2) Data types and structures.
  */
 typedef struct Point Point;
 typedef struct Space Space;
@@ -45,7 +63,7 @@ struct Pair {
 };
 
 /**
- * () QuickSort Algorithm for Space. (aka "QuickSortSpace", qss)
+ * (3) QuickSort Algorithm for Space. (aka "QuickSortSpace", qss)
  */
 void qssSwap(Point** a, Point** b) { 
   Point* tmp = *a; 
@@ -91,7 +109,7 @@ int sortSpaceCompareY(Point* a, Point* b) {
 }
 
 /**
- * () Space and Point operations.
+ * (4) Space and Point operations.
  */
 Space* createSpace(int count) {
   Space* space = (Space*) malloc(sizeof(Space));
@@ -163,7 +181,7 @@ void freePointsOfSpace(Space* space) {
 }
 
 /**
- * () Closest Pair Calculation
+ * (5) Closest Pair Calculation
  */
 float dist(Point* a, Point* b) {
   return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2));
@@ -343,7 +361,7 @@ Pair* findClosestPair(Space* space) {
 }
 
 /**
- * () Main
+ * (6) Main (Entry Point)
  */
 void printPair(Pair* pair) {
   printf(" Point A: (x:%d, y:%d)\n Point B: (x:%d, y:%d)\n Distance: %.3f\n",
