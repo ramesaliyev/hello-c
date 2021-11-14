@@ -150,13 +150,16 @@ Space* createSpaceFromFile(char* filename) {
   return space;
 }
 
-void freeSpaceAndPoints(Space* space) {
+void freeSpace(Space* space) {
+  free(space->points);
+  free(space);
+}
+
+void freePointsOfSpace(Space* space) {
   int i;
   for (i = 0; i < space->count; i++) {
     free(space->points[i]);
   }
-  free(space->points);
-  free(space);
 }
 
 /**
@@ -230,7 +233,7 @@ Pair* getClosestPairInStripSubspace(Space* spaceY, Point* midpoint, float distan
 
   // Find closest pair of strip subspace.
   Pair* closestPair = getClosestPairBelowBound(subspace, distance, true);
-  free(subspace);
+  freeSpace(subspace);
   return closestPair;
 }
 
@@ -311,10 +314,10 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY) {
   }
 
   // Free temporary subspaces.
-  free(leftSpaceX);
-  free(leftSpaceY);
-  free(rightSpaceX);
-  free(rightSpaceY);
+  freeSpace(leftSpaceX);
+  freeSpace(leftSpaceY);
+  freeSpace(rightSpaceX);
+  freeSpace(rightSpaceY);
 
   return closestPair;
 }
@@ -333,8 +336,8 @@ Pair* findClosestPair(Space* space) {
   Pair* closestPair = getClosestPair(spaceX, spaceY);
 
   // Free temporary spaces.
-  free(spaceX);
-  free(spaceY);
+  freeSpace(spaceX);
+  freeSpace(spaceY);
 
   return closestPair;
 }
@@ -374,7 +377,9 @@ int main(int argc, char** argv) {
   free(pairbf);
 
   // Free space and the points it have.
-  freeSpaceAndPoints(space);
+  freePointsOfSpace(space);
+  freeSpace(space);
   free(closestPair);
+
   return 0;
 }
