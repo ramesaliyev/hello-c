@@ -136,7 +136,7 @@ Space* copySpace(Space* space) {
 
 // Read collection of points (aka Space) from a txt file.
 // Each line of file should has space separated x y information.
-Space* readSpaceFromFile(char* filename) {
+Space* createSpaceFromFile(char* filename) {
   FILE* file = fopen(filename, "r");
 
   if (file == NULL) {
@@ -268,8 +268,6 @@ Pair* getClosestPairInStripSubspace(Space* spaceY, Point* midpoint, float distan
 
 // Recursive part of the closest pair calculation function. 
 Pair* getClosestPair(Space* spaceX, Space* spaceY) {
-  printf("getClosestPair\n");
-
   // Return pair directly if n == 2.
   if (spaceX->count == 2) {
     return createPair(
@@ -373,25 +371,30 @@ Pair* findClosestPair(Space* space) {
 /**
  * () Main
  */
-int main() {
-  Space* space = readSpaceFromFile("sample.txt");
+void printPair(Pair* pair) {
+  printf(" Point A: (x:%d, y:%d)\n Point B: (x:%d, y:%d)\n Distance: %.3f\n",
+    pair->a->x, pair->a->y, pair->b->x, pair->b->y, pair->distance);
+}
 
-  Pair* pair = getClosestPairByBruteForce(space);
-  printf("(%d, %d) -> (%d, %d) = %.6f\n",
-    pair->a->x, pair->a->y,
-    pair->b->x, pair->b->y,
-    pair->distance
-  );
+int main(int argc, char** argv) {
+  char* input = DEFAULT_INPUT;
+  if (argc >= 2) input = argv[1];
 
-  pair = findClosestPair(space);
-  printf("(%d, %d) -> (%d, %d) = %.6f\n",
-    pair->a->x, pair->a->y,
-    pair->b->x, pair->b->y,
-    pair->distance
-  );
+  // Read input file and create Space.
+  Space* space = createSpaceFromFile(input);
 
-  freeSpace(space);
+  // Find and print closest pair.
+  Pair* pair = findClosestPair(space);
+  printf("Result of Divide & Conquer Method: \n");
+  printPair(pair);
   freePair(pair);
 
+  // Also find with brute-force method.
+  Pair* pairBF = getClosestPairByBruteForce(space);
+  printf("\nResult of Divide & Conquer Method: \n");
+  printPair(pairBF);
+  freePair(pairBF);
+
+  freeSpace(space);
   return 0;
 }
