@@ -271,17 +271,15 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY) {
   Space* rightSpaceY = createSpace(count - mid);
 
   // Fill subspaces by splitting space vertically by mid point.
-  // -> Index variables.
   int li = 0; // Index of left subspace.
   int ri = 0; // Index of right subspace.
   int i;
-  // -> Loop through all points.
   for (i = 0; i < count; i++) {
     Point* p = spaceY->points[i];
     // If left subspace is not full AND
     // (point is to the left of midpoint OR
     // point is on the same x-axis but below midpoint)
-    // then add point to the left subspace.
+    // Then add point to the left subspace.
     // Otherwise; add it to the right subspace.
     if (li < mid && (p->x < midX || (p->x == midX && p->y < midY))) {
       leftSpaceY->points[li++] = p;
@@ -291,31 +289,33 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY) {
   }
 
   // Temporary closest pair pointer.
-  Pair* closestPairYet;
+  Pair* closestPair;
 
   // Get closest pairs of left and right subspaces. 
   Pair* leftClosestPair = getClosestPair(leftSpaceX, leftSpaceY);
   Pair* rightClosestPair = getClosestPair(rightSpaceX, rightSpaceY);
 
   // Pick closest one of two pairs.
-  closestPairYet = leftClosestPair->distance < rightClosestPair->distance ?
-    leftClosestPair : rightClosestPair;
-
-  // Get closest pair in strip space.
-  Pair* closerPairInStripSpace = getClosestPairInStripSubspace(spaceY, midpoint, closestPairYet->distance);
-
-  // Pick closest one again if strip space has event closest pair.
-  if (closerPairInStripSpace != NULL && closerPairInStripSpace->distance < closestPairYet->distance) {
-    closestPairYet = closerPairInStripSpace;
+  if (leftClosestPair->distance < rightClosestPair->distance) {
+    closestPair = leftClosestPair;
+    free(rightClosestPair);
+  } else {
+    closestPair = rightClosestPair;
+    free(leftClosestPair);
   }
 
-  // Create the closest pair.
-  Pair* closestPair = createPair(closestPairYet->a, closestPairYet->b, closestPairYet->distance);
+  // Get closest pair in strip space.
+  Pair* closerPairInStripSpace = getClosestPairInStripSubspace(spaceY, midpoint, closestPair->distance);
 
-  // Free temporary pairs.
-  free(leftClosestPair);
-  free(rightClosestPair);
-  if (closerPairInStripSpace != NULL) free(closerPairInStripSpace);
+  // Pick closest one again if strip space has even closest pair.
+  if (closerPairInStripSpace != NULL) {
+    if (closerPairInStripSpace->distance < closestPair->distance) {
+      free(closestPair);
+      closestPair = closerPairInStripSpace;
+    } else {
+      free(closerPairInStripSpace);
+    }
+  }
 
   // Free temporary subspaces.
   free(leftSpaceX);
