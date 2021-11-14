@@ -103,12 +103,7 @@ Space* createSpace(int count) {
 Space* sliceSpace(Space* space, int start, int end) {
   int count = end - start;
   Space *copy = createSpace(count);
-
-  int i;
-  for(i = 0; i < count; i++) {
-    copy->points[i] = space->points[i + start];
-  }
-
+  memcpy(copy->points, (space->points + start), count * (sizeof(Point)/sizeof(char)));
   return copy;
 }
 
