@@ -332,10 +332,12 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
   // Get closest pairs of left and right subspaces.
   printf("%*s", indent * 3, "");
   printf("-- Branching into left subspace.\n");
+
   Pair* leftClosestPair = getClosestPair(leftSpaceX, leftSpaceY, indent);
 
   printf("%*s", indent * 3, "");
   printf("++ Branching into right subspace.\n");
+
   Pair* rightClosestPair = getClosestPair(rightSpaceX, rightSpaceY, indent);
 
   printf("%*s", indent * 3, "");
@@ -355,11 +357,13 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
   if (leftClosestPair->distance <= rightClosestPair->distance) {
     printf("%*s", indent * 3, "");
     printf("   * Left pair is closer.\n");
+
     closestPair = leftClosestPair;
     free(rightClosestPair);
   } else {
     printf("%*s", indent * 3, "");
     printf("   * Right pair is closer.\n");
+
     closestPair = rightClosestPair;
     free(leftClosestPair);
   }
@@ -380,6 +384,7 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
     printf("%*s", indent * 3, "");
     printf("   * Using pair from strip-space since it is closer than current one with %f\n",
       closestPair->distance);
+    
     free(closestPair);
     closestPair = closerPairInStripSpace;
   } else {
@@ -392,7 +397,6 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY, int indent) {
   freeSpace(leftSpaceY);
   freeSpace(rightSpaceX);
   freeSpace(rightSpaceY);
-
 
   printf("%*s", indent * 3, "");
   printf("<- Result of branch -- (%d, %d) -> (%d, %d) = %f\n",
@@ -426,11 +430,6 @@ Pair* findClosestPair(Space* space) {
 /**
  * (6) Main (Entry Point)
  */
-void printPair(Pair* pair) {
-  printf(" Point A: (x:%d, y:%d)\n Point B: (x:%d, y:%d)\n Distance: %.3f\n",
-    pair->a->x, pair->a->y, pair->b->x, pair->b->y, pair->distance);
-}
-
 int main(int argc, char** argv) {
   char* input = DEFAULT_INPUT;
   if (argc >= 2) input = argv[1];
