@@ -191,7 +191,6 @@ Pair* getClosestPairBelowBound(Space* space, float bound, bool exitIfYGrows) {
   for (i = 0; i < count; i++) {
     for (j = i + 1; j < count && (!exitIfYGrows || ((points[j]->y - points[i]->y) < min)); j++) {
       float distance = dist(points[i], points[j]); 
-
       if (distance < min) {
         a = points[i];
         b = points[j];
@@ -239,10 +238,9 @@ Pair* getClosestPairInStripSubspace(Space* spaceY, Point* midpoint, float distan
 Pair* getClosestPair(Space* spaceX, Space* spaceY) {
   // Return pair directly if n == 2.
   if (spaceX->count == 2) {
-    return createPair(
-      spaceX->points[0], spaceX->points[1],
-      dist(spaceX->points[0], spaceX->points[1])
-    );
+    Point* a = spaceX->points[0];
+    Point* b = spaceX->points[1];
+    return createPair(a, b, dist(a, b));
   }
 
   // Do brute-force if n == 3
@@ -291,7 +289,7 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY) {
   Pair* rightClosestPair = getClosestPair(rightSpaceX, rightSpaceY);
 
   // Pick closest one of two pairs.
-  if (leftClosestPair->distance < rightClosestPair->distance) {
+  if (leftClosestPair->distance <= rightClosestPair->distance) {
     closestPair = leftClosestPair;
     free(rightClosestPair);
   } else {
