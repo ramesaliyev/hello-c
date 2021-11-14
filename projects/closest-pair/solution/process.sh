@@ -5,5 +5,5 @@ gcc main.c -std=c99 -pedantic -Wall -lm -o main
 for f in ./samples/*.txt
 do
   ./main $f
+  printf "\n"
 done
-

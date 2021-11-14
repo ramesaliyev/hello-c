@@ -7,6 +7,10 @@
 #include <math.h>
 
 /**
+ * README
+ */
+
+/**
  * () Program configuration definitions.
  */
 #define LINESIZE 256
@@ -18,6 +22,8 @@
 typedef struct Point Point;
 typedef struct Space Space;
 typedef struct Pair Pair;
+
+typedef int (*PointCmp) (Point*, Point*); // Point comparator function type.
 
 // A point in Space. Space is 2D in this program.
 struct Point {
@@ -39,21 +45,12 @@ struct Pair {
 };
 
 /**
- * () Common generic utilities.
- */
-char* mallocstr(int size) {
-  return (char*) malloc((size + 1) * sizeof(char));
-}
-
-/**
  * () QuickSort Algorithm for Space. (aka "QuickSortSpace", qss)
  */
-typedef int (*PointCmp) (Point*, Point*);
-
 void qssSwap(Point** a, Point** b) { 
-  Point* point = *a; 
+  Point* tmp = *a; 
   *a = *b; 
-  *b = point; 
+  *b = tmp; 
 }
 
 int qssPartition(Space* space, int left, int right, PointCmp cmp) {
@@ -96,21 +93,6 @@ int sortSpaceCompareY(Point* a, Point* b) {
 /**
  * () Space and Point operations.
  */
-Point* createPoint(int x, int y) {
-  Point* point = (Point*) malloc(sizeof(Point));
-  point->x = x;
-  point->y = y;
-  return point;
-}
-
-Point* copyPoint(Point* point) {
-  return createPoint(point->x, point->y);
-}
-
-void freePoint(Point* point) {
-  free(point);
-}
-
 Space* createSpace(int count) {
   Space* space = (Space*) malloc(sizeof(Space));
   space->points = (Point**) calloc(count, sizeof(Point));
@@ -124,7 +106,7 @@ Space* sliceSpace(Space* space, int start, int end) {
 
   int i;
   for(i = 0; i < count; i++) {
-    copy->points[i] = copyPoint(space->points[i + start]);
+    copy->points[i] = space->points[i + start];
   }
 
   return copy;
@@ -146,7 +128,7 @@ Space* createSpaceFromFile(char* filename) {
 
   // Create Space with an initial size.
   Space* space = createSpace(16);
-  char* line = mallocstr(LINESIZE);
+  char* line = (char*) malloc((LINESIZE + 1) * sizeof(char));
   int index = 0;
 
   while (fgets(line, LINESIZE, file)) {
@@ -156,7 +138,7 @@ Space* createSpaceFromFile(char* filename) {
       space->points = (Point**) realloc(space->points, space->count * sizeof(Point));
     }
 
-    Point* point = createPoint(0, 0);
+    Point* point = (Point*) malloc(sizeof(Point));
     point->x = atoi(strtok(line, " "));
     point->y = atoi(strtok(NULL, " "));
     space->points[index++] = point;
@@ -173,10 +155,10 @@ Space* createSpaceFromFile(char* filename) {
   return space;
 }
 
-void freeSpace(Space* space) {
+void freeSpaceAndPoints(Space* space) {
   int i;
   for (i = 0; i < space->count; i++) {
-    freePoint(space->points[i]);
+    free(space->points[i]);
   }
   free(space->points);
   free(space);
@@ -195,16 +177,10 @@ float min(float a, float b) {
 
 Pair* createPair(Point* a, Point* b, float distance) {
   Pair* pair = (Pair*) malloc(sizeof(Pair));
-  pair->a = copyPoint(a);
-  pair->b = copyPoint(b);
+  pair->a = a;
+  pair->b = b;
   pair->distance = distance;
   return pair;
-}
-
-void freePair(Pair* pair) {
-  freePoint(pair->a);
-  freePoint(pair->b);
-  free(pair);
 }
 
 // Generic function for retrieving closest pair below some specified distance.
@@ -253,16 +229,14 @@ Pair* getClosestPairInStripSubspace(Space* spaceY, Point* midpoint, float distan
   
   for (i = 0; i < spaceY->count; i++) {
     if (abs(spaceY->points[i]->x - midpoint->x) < distance) {
-      subspace->points[j++] = copyPoint(spaceY->points[i]);
+      subspace->points[j++] = spaceY->points[i];
     }
   }
   subspace->count = j; // fix the count.
 
-  // Find 
+  // Find closest pair of strip subspace.
   Pair* closestPair = getClosestPairBelowBound(subspace, distance, true);
-
-  freeSpace(subspace);
-
+  free(subspace);
   return closestPair;
 }
 
@@ -296,7 +270,7 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY) {
   Space* leftSpaceY = createSpace(mid);
   Space* rightSpaceY = createSpace(count - mid);
 
-  // Fill subspaces by splitting space by mid point.
+  // Fill subspaces by splitting space vertically by mid point.
   // -> Index variables.
   int li = 0; // Index of left subspace.
   int ri = 0; // Index of right subspace.
@@ -310,62 +284,66 @@ Pair* getClosestPair(Space* spaceX, Space* spaceY) {
     // then add point to the left subspace.
     // Otherwise; add it to the right subspace.
     if (li < mid && (p->x < midX || (p->x == midX && p->y < midY))) {
-      leftSpaceY->points[li++] = copyPoint(p);
+      leftSpaceY->points[li++] = p;
     } else {
-      rightSpaceY->points[ri++] = copyPoint(p);
+      rightSpaceY->points[ri++] = p;
     }
   }
+
+  // Temporary closest pair pointer.
+  Pair* closestPairYet;
 
   // Get closest pairs of left and right subspaces. 
   Pair* leftClosestPair = getClosestPair(leftSpaceX, leftSpaceY);
   Pair* rightClosestPair = getClosestPair(rightSpaceX, rightSpaceY);
 
   // Pick closest one of two pairs.
-  Pair* closestPair;
-  if (leftClosestPair->distance < rightClosestPair->distance) {
-    closestPair = leftClosestPair;
-    freePair(rightClosestPair);
-  } else {
-    closestPair = rightClosestPair;
-    freePair(leftClosestPair);
-  }
+  closestPairYet = leftClosestPair->distance < rightClosestPair->distance ?
+    leftClosestPair : rightClosestPair;
 
   // Get closest pair in strip space.
-  Pair* closestPairInStripspace = getClosestPairInStripSubspace(spaceY, midpoint, closestPair->distance);
+  Pair* closerPairInStripSpace = getClosestPairInStripSubspace(spaceY, midpoint, closestPairYet->distance);
 
-  // Pick closest one again.
-  if (closestPairInStripspace != NULL) {
-    if (closestPairInStripspace->distance < closestPair->distance) {
-      freePair(closestPair);
-      closestPair = closestPairInStripspace;
-    } else {
-      freePair(closestPairInStripspace);
-    }
+  // Pick closest one again if strip space has event closest pair.
+  if (closerPairInStripSpace != NULL && closerPairInStripSpace->distance < closestPairYet->distance) {
+    closestPairYet = closerPairInStripSpace;
   }
 
+  // Create the closest pair.
+  Pair* closestPair = createPair(closestPairYet->a, closestPairYet->b, closestPairYet->distance);
+
+  // Free temporary pairs.
+  free(leftClosestPair);
+  free(rightClosestPair);
+  if (closerPairInStripSpace != NULL) free(closerPairInStripSpace);
+
   // Free temporary subspaces.
-  freeSpace(leftSpaceX);
-  freeSpace(leftSpaceY);
-  freeSpace(rightSpaceX);
-  freeSpace(rightSpaceY);
+  free(leftSpaceX);
+  free(leftSpaceY);
+  free(rightSpaceX);
+  free(rightSpaceY);
 
   return closestPair;
 }
 
 // Main function to find closest pair.
 Pair* findClosestPair(Space* space) {
+  // Create two copy of space.
   Space* spaceX = copySpace(space);
   Space* spaceY = copySpace(space);
 
+  // Sort by X and Y.
   sortSpace(spaceX, sortSpaceCompareX);
   sortSpace(spaceY, sortSpaceCompareY);
 
-  Pair* pair = getClosestPair(spaceX, spaceY);
+  // Get closest pair.
+  Pair* closestPair = getClosestPair(spaceX, spaceY);
 
-  freeSpace(spaceX);
-  freeSpace(spaceY);
+  // Free temporary spaces.
+  free(spaceX);
+  free(spaceY);
 
-  return pair;
+  return closestPair;
 }
 
 /**
@@ -385,17 +363,25 @@ int main(int argc, char** argv) {
   Space* space = createSpaceFromFile(input);
 
   // Find and print closest pair.
-  Pair* pair = findClosestPair(space);
+  Pair* closestPair = findClosestPair(space);
   printf("Result of Divide & Conquer Method: \n");
-  printPair(pair);
-  freePair(pair);
+  printPair(closestPair);
 
-  // Also find with brute-force method.
-  // Pair* pairBF = getClosestPairByBruteForce(space);
-  // printf("\nResult of Brute-Force Method: \n");
-  // printPair(pairBF);
-  // freePair(pairBF);
+  // Test of correctness, calculate with brute-force and compare.
+  Pair* pairbf = getClosestPairByBruteForce(space);
+  if (
+    (pairbf->distance != closestPair->distance) || 
+    ((pairbf->a != closestPair->a || pairbf->b != closestPair->b) &&
+      (pairbf->b != closestPair->a || pairbf->a != closestPair->b))
+  ) {
+    printf("ALERT: Results of D&C and BF DO NOT MATCH!");
+    printf("Result of Brute-Force Method: \n");
+    printPair(pairbf);
+  }
+  free(pairbf);
 
-  freeSpace(space);
+  // Free space and the points it have.
+  freeSpaceAndPoints(space);
+  free(closestPair);
   return 0;
 }
