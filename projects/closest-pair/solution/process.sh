@@ -2,4 +2,8 @@
 gcc main.c -std=c99 -pedantic -Wall -lm -o main
 
 # Run program
-./main sample.txt
+for f in ./samples/*.txt
+do
+  ./main $f
+done
+

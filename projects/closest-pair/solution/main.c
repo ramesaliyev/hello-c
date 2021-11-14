@@ -214,11 +214,11 @@ Pair* getClosestPairBelowBound(Space* space, float bound, bool exitIfYGrows) {
   int count = space->count;
   float min = bound;
   int i, j;
-  Point* a;
-  Point* b;
+  Point* a = NULL;
+  Point* b = NULL;
 
   for (i = 0; i < count; i++) {
-    for (j = i + 1; j < count && (!exitIfYGrows || (points[i]->y - points[j]->y < min)); j++) {
+    for (j = i + 1; j < count && (!exitIfYGrows || ((points[j]->y - points[i]->y) < min)); j++) {
       float distance = dist(points[i], points[j]); 
 
       if (distance < min) {
@@ -379,6 +379,7 @@ void printPair(Pair* pair) {
 int main(int argc, char** argv) {
   char* input = DEFAULT_INPUT;
   if (argc >= 2) input = argv[1];
+  printf("[Processing file %s]\n", input);
 
   // Read input file and create Space.
   Space* space = createSpaceFromFile(input);
@@ -390,10 +391,10 @@ int main(int argc, char** argv) {
   freePair(pair);
 
   // Also find with brute-force method.
-  Pair* pairBF = getClosestPairByBruteForce(space);
-  printf("\nResult of Divide & Conquer Method: \n");
-  printPair(pairBF);
-  freePair(pairBF);
+  // Pair* pairBF = getClosestPairByBruteForce(space);
+  // printf("\nResult of Brute-Force Method: \n");
+  // printPair(pairBF);
+  // freePair(pairBF);
 
   freeSpace(space);
   return 0;
