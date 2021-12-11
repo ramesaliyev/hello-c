@@ -116,6 +116,7 @@ void sortPool(Pool* pool) {
 /**
  * () Problem Solution
  */
+// Memory allocation and deallocations for our data types.
 Task* createTask(int start, int duration, int value) {
   Task* task = (Task*) malloc(sizeof(Task));
   task->start = start;
@@ -140,21 +141,34 @@ void freePool(Pool* pool) {
   free(pool);
 }
 
-int findLatestNonOverlapingTaskIndex(Pool* pool, int taskIndex) {
-  Task* t1 = pool->tasks[taskIndex];
+// Finding index of the nearest non-overlaping task
+// in sorted pool from the left of the task with index j.
+// with binary search approach.
+int findLatestNonOverlapingTaskIndex(Pool* pool, int j) {
+  Task** tasks = pool->tasks;
+  int taskStart = tasks[j]->start;
 
-  int i;
-  for (i = taskIndex - 1; i >= 0; i--) {
-    Task* t2 = pool->tasks[i];
+  int l = 0;
+  int r = j - 1;
 
-    if (t2->finish <= t1->start) {
-      return i;
+  while (l <= r) {
+    int m = (l + r) / 2;
+
+    if (tasks[m]->finish <= taskStart) {
+      if (tasks[m + 1]->finish <= taskStart) {
+        l = m + 1;
+      } else {
+        return m;
+      }
+    } else {
+      r = m - 1;
     }
   }
 
   return -1;
 }
 
+// Calculate step by step most possible gains.
 int* calculateGains(Pool* pool) {
   // Initialize gain with first value.
   int* gains = createIntArray(pool->count);
@@ -176,6 +190,7 @@ int* calculateGains(Pool* pool) {
   return gains;
 }
 
+// Calculate taken path of tasks by gains.
 int* calculatePath(Pool* pool, int* gains) {
   int* path = createIntArray(pool->count);
   int j = 0;
