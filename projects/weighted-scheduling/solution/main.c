@@ -193,12 +193,12 @@ int* calculateGains(Pool* pool) {
 // Calculate taken path of tasks by gains.
 int* calculatePath(Pool* pool, int* gains) {
   int* path = createIntArray(pool->count);
-  int j = 0;
+  int j = pool->count - 1;
 
   int i = pool->count - 1;
   while (i >= 0) {
     if (i == 0 || gains[i] != gains[i - 1]) {
-      path[j++] = i + 1;
+      path[j--] = i + 1;
       i = findLatestNonOverlapingTaskIndex(pool, i);
     } else {
       i--;
@@ -212,39 +212,77 @@ int* calculatePath(Pool* pool, int* gains) {
  * () Extra: Reading tasks from file.
  * This is implemented for testing purposes.
  */
+Pool* createPoolFromFile(char* filename) {
+  FILE* file = fopen(filename, "r");
+
+  if (file == NULL) {
+    printf("Error: Could not read file '%s'\n", filename);
+    return NULL;
+  };
+
+  // Create Pool with an initial size.
+  Pool* pool = createPool(16);
+  char* line = (char*) malloc((LINESIZE + 1) * sizeof(char));
+  int index = 0;
+  int start, duration, value;
+
+  while (fgets(line, LINESIZE, file)) {
+    // Reallocate memory for Pool if we need more.
+    if (index == pool->count) {
+      pool->count *= 2;
+      pool->tasks = (Task**) realloc(pool->tasks, pool->count * sizeof(Task));
+    }
+
+    start = atoi(strtok(line, " "));
+    duration = atoi(strtok(NULL, " "));
+    value = atoi(strtok(NULL, " "));
+    pool->tasks[index++] = createTask(start, duration, value);
+  }
+
+  // Shrink memory pool of Pool if necessary.
+  if (pool->count > index) {
+    pool->count = index;
+    pool->tasks = (Task**) realloc(pool->tasks, pool->count * sizeof(Task));
+  }
+
+  fclose(file);
+  free(line);
+
+  return pool;
+}
 
 /**
  * () Getting tasks from user.
  */
+Pool* createPoolFromUserInput() {
+  return createPool(1);
+}
 
 /**
  * () Main (Entry Point)
  */
 int main(int argc, char** argv) {
-  int taskCount = 7;
-  
-  Pool* pool = createPool(taskCount);
-  int i = 0;
-  pool->tasks[i++] = createTask(9, 7, 1);
-  pool->tasks[i++] = createTask(2, 5, 4);
-  pool->tasks[i++] = createTask(10, 2, 2);
-  pool->tasks[i++] = createTask(2, 9, 7);
-  pool->tasks[i++] = createTask(5, 4, 4);
-  pool->tasks[i++] = createTask(2, 13, 7);
-  pool->tasks[i++] = createTask(1, 3, 2);
-  
-  sortPool(pool);
+  Pool* pool = NULL;
 
+  // Choose between reading from a file or user input.
+  if (argc == 2) {
+    pool = createPoolFromFile(argv[1]);
+  } else {
+    pool = createPoolFromUserInput();
+    exit(0);
+  }
+
+  sortPool(pool);
   int* gains = calculateGains(pool);
   int* path = calculatePath(pool, gains);
 
-  for (int k = 0; k < taskCount; k++) {
-    printf("%d ", gains[k]);
-  }
-  printf("\n");
-
-  for (int k = 0; k < taskCount; k++) {
-    printf("%d ", path[k]);
+  // Print result.
+  printf("%d |", gains[pool->count - 1]);
+  int i;
+  for (i = 0; i < pool->count; i++) {
+    if (path[i] != 0) {
+      printf(" %d", path[i]);
+    }
   }
   printf("\n");
 
