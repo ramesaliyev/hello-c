@@ -255,7 +255,28 @@ Pool* createPoolFromFile(char* filename) {
  * () Getting tasks from user.
  */
 Pool* createPoolFromUserInput() {
-  return createPool(1);
+  int count;
+  printf("Please enter task (advert) count: ");
+  scanf("%d", &count);
+
+  // Create pool and fill the pool.
+  Pool* pool = createPool(count);
+  int start, duration, value;
+  
+  int i;
+  for (i = 0; i < count; i++) {
+    printf("  Enter details of task #%d:\n", i + 1);
+    printf("    Start: ");
+    scanf("%d", &start);
+    printf("    Duration: ");
+    scanf("%d", &duration);
+    printf("    Value: ");
+    scanf("%d", &value);
+
+    pool->tasks[i] = createTask(start, duration, value);
+  }
+
+  return pool;
 }
 
 /**
@@ -269,7 +290,6 @@ int main(int argc, char** argv) {
     pool = createPoolFromFile(argv[1]);
   } else {
     pool = createPoolFromUserInput();
-    exit(0);
   }
 
   sortPool(pool);
