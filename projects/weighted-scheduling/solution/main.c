@@ -44,61 +44,44 @@ int* createIntArray(int len) {
  * Will call provided IndexComparator to decide the order.
  * In the end will return sorted index array.
  */
-void mergeIndexes(int* arr, int l, int m, int r, void* data, IndexComparator cmp) {
+// Merging part of merge-sort.
+void indexSortMerge(int* arr, int l, int m, int r, void* data, IndexComparator cmp) {
+  int llen = m - l + 1;
+  int rlen = r - m;
+
+  // Create temporary left and right arrays.
+  int left[llen];
+  int right[rlen];
+  memcpy(&left, (arr + l), llen * sizeof(int));
+  memcpy(&right, (arr + m + 1), rlen * sizeof(int));
+
+  // We'll merge left and right arrays back into original.
   int i, j, k;
-  int n1 = m - l + 1;
-  int n2 = r - m;
+  i = j = 0; // indexes in temp arrays.
+  k = l; // index in original array.
 
-  // Create left and right arrays.
-  int L[n1], R[n2];
-  /* Copy data to temp arrays L[] and R[] */
-  for (i = 0; i < n1; i++)
-    L[i] = arr[l + i];
-  for (j = 0; j < n2; j++)
-    R[j] = arr[m + 1 + j];
-
-  /* Merge the temp arrays back into arr[l..r]*/
-  i = 0; // Initial index of first subarray
-  j = 0; // Initial index of second subarray
-  k = l; // Initial index of merged subarray
-  while (i < n1 && j < n2) {
-      if (cmp(data, L[i], R[j]) <= 0) {
-          arr[k] = L[i];
-          i++;
-      }
-      else {
-          arr[k] = R[j];
-          j++;
-      }
-      k++;
+  // Merge by comparing.
+  while (i < llen && j < rlen) {
+    arr[k++] = cmp(data, left[i], right[j]) <= 0 ?
+      left[i++] : right[j++];
   }
 
-  /* Copy the remaining elements of L[], if there
-  are any */
-  while (i < n1) {
-      arr[k] = L[i];
-      i++;
-      k++;
-  }
-
-  /* Copy the remaining elements of R[], if there
-  are any */
-  while (j < n2) {
-      arr[k] = R[j];
-      j++;
-      k++;
-  }
+  // Copy remaining elements.
+  while (i < llen) arr[k++] = left[i++];
+  while (j < rlen) arr[k++] = right[j++];
 }
 
+// Recursive part of merge-sort.
 void indexSort(int* arr, int l, int r, void* data, IndexComparator cmp) {
   if (l < r) {
-    int m = l + (r - l) / 2;
+    int m = (l + r) / 2;
     indexSort(arr, l, m, data, cmp);
     indexSort(arr, m + 1, r, data, cmp);
-    mergeIndexes(arr, l, m, r, data, cmp);
+    indexSortMerge(arr, l, m, r, data, cmp);
   }
 }
 
+// Comparator for custom data type.
 int taskComparator(void* data, int i, int j) {
   Pool* pool = (Pool*) data; // Cast data type.
   Task* t1 = pool->tasks[i];
@@ -106,20 +89,28 @@ int taskComparator(void* data, int i, int j) {
   return t1->finish - t2->finish;
 }
 
+// Main sort function for our data type Pool.
 void sortPool(Pool* pool) {
+  int* indexes = createIntArray(pool->count);
+
   // Create 0...n-1 index array.
-  int n = pool->count;
   int i = 0;
-  int* indexes = createIntArray(n);
-  for (i = 0; i < n; i++) indexes[i] = i;
+  for (i = 0; i < pool->count; i++) indexes[i] = i;
 
   // Do index sort by our pool.
-  indexSort(indexes, 0, n - 1, pool, taskComparator);
+  indexSort(indexes, 0, pool->count - 1, pool, taskComparator);
 
-  for (int k = 0; k < n; k++) {
-    printf("%d ", indexes[k]);
+  // Reflect sorted indexes into our pool.
+  Task** tasks = (Task**) calloc(pool->count, sizeof(Task*));
+  for (i = 0; i < pool->count; i++) {
+    tasks[i] = pool->tasks[indexes[i]];
   }
-  printf("\n");
+
+  // Put sorted tasks in place, free previous one.
+  free(pool->tasks);
+  pool->tasks = tasks;
+  
+  free(indexes);
 }
 
 /**
@@ -141,15 +132,23 @@ Pool* createPool(int count) {
   return pool;
 }
 
+void freePool(Pool* pool) {
+  int i;
+  for (i = 0; i < pool->count; i++) {
+    free(pool->tasks[i]);
+  }
+  free(pool);
+}
+
 int findLatestNonOverlapingTaskIndex(Pool* pool, int taskIndex) {
   Task* t1 = pool->tasks[taskIndex];
 
-  int j;
-  for (j = taskIndex - 1; j >= 0; j--) {
-    Task* t2 = pool->tasks[j];
+  int i;
+  for (i = taskIndex - 1; i >= 0; i--) {
+    Task* t2 = pool->tasks[i];
 
     if (t2->finish <= t1->start) {
-      return j;
+      return i;
     }
   }
 
@@ -161,17 +160,17 @@ int* calculateGains(Pool* pool) {
   int* gains = createIntArray(pool->count);
   gains[0] = pool->tasks[0]->value;
 
-  int j;
-  for (j = 1; j < pool->count; j++) {
-    int nextGain = pool->tasks[j]->value;
-    int prevGain = gains[j - 1];
+  int i;
+  for (i = 1; i < pool->count; i++) {
+    int nextGain = pool->tasks[i]->value;
+    int prevGain = gains[i - 1];
 
     // Check if there is previous non overlapping gain.
-    int prev = findLatestNonOverlapingTaskIndex(pool, j);
+    int prev = findLatestNonOverlapingTaskIndex(pool, i);
     if (prev != -1) nextGain += gains[prev];
 
     // Choose bigger gain.
-    gains[j] = nextGain > prevGain ? nextGain : prevGain;
+    gains[i] = nextGain > prevGain ? nextGain : prevGain;
   }
 
   return gains;
@@ -179,15 +178,15 @@ int* calculateGains(Pool* pool) {
 
 int* calculatePath(Pool* pool, int* gains) {
   int* path = createIntArray(pool->count);
-  int i = 0;
+  int j = 0;
 
-  int j = pool->count - 1;
-  while (j >= 0) {
-    if (j == 0 || gains[j] != gains[j - 1]) {
-      path[i++] = j + 1;
-      j = findLatestNonOverlapingTaskIndex(pool, j);
+  int i = pool->count - 1;
+  while (i >= 0) {
+    if (i == 0 || gains[i] != gains[i - 1]) {
+      path[j++] = i + 1;
+      i = findLatestNonOverlapingTaskIndex(pool, i);
     } else {
-      j--;
+      i--;
     }
   }
 
@@ -234,5 +233,7 @@ int main(int argc, char** argv) {
   }
   printf("\n");
 
+  // Free and exit.
+  freePool(pool);
   return 0;
 }
