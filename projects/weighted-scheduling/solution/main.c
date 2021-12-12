@@ -5,15 +5,31 @@
 
 /**
  * README
+ * 
+ * Please start reading code from Main (Entry Point), 
+ * and go upwards to easily follow solution flow.
+ * 
+ * Code structure:
+ * Search like "(x)" to jump directly to section.
+ * 
+ * (1) Program configuration definitions.
+ * (2) Data types and structures.
+ * (3) Generic helper functions.
+ * (4) Generic sorting implementation based on merge-sort.
+ * (5) Problem Solution
+ * (6) Extra: Reading tasks from file.
+ * (7) Getting tasks from user.
+ * (8) Main (Entry Point)
+ * 
  */
 
 /**
- * () Program configuration definitions.
+ * (1) Program configuration definitions.
  */
 #define LINESIZE 256
 
 /**
- * () Data types and structures.
+ * (2) Data types and structures.
  */
 typedef struct Task Task; 
 typedef struct Pool Pool;
@@ -33,14 +49,14 @@ struct Pool {
 };
 
 /**
- * () Generic helper functions.
+ * (3) Generic helper functions.
  */
 int* createIntArray(int len) {
   return (int*) calloc(len, sizeof(int));
 }
 
 /**
- * () Generic sorting implementation based on merge-sort.
+ * (4) Generic sorting implementation based on merge-sort.
  * Will work with any array filled with indexes.
  * Will call provided IndexComparator to decide the order.
  * In the end will return sorted index array.
@@ -115,7 +131,7 @@ void sortPool(Pool* pool) {
 }
 
 /**
- * () Problem Solution
+ * (5) Problem Solution
  */
 // Memory allocation and deallocations for our data types.
 Task* createTask(int id, int start, int duration, int value) {
@@ -237,7 +253,7 @@ int* calculatePath(Pool* pool, int* gains) {
 }
 
 /**
- * () Extra: Reading tasks from file.
+ * (6) Extra: Reading tasks from file.
  * This is implemented for testing purposes.
  */
 Pool* createPoolFromFile(char* filename) {
@@ -281,7 +297,7 @@ Pool* createPoolFromFile(char* filename) {
 }
 
 /**
- * () Getting tasks from user.
+ * (7) Getting tasks from user.
  */
 Pool* createPoolFromUserInput() {
   int count;
@@ -309,7 +325,7 @@ Pool* createPoolFromUserInput() {
 }
 
 /**
- * () Main (Entry Point)
+ * (8) Main (Entry Point)
  */
 int main(int argc, char** argv) {
   Pool* pool = NULL;
