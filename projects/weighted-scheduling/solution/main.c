@@ -207,25 +207,27 @@ int* calculateGains(Pool* pool) {
 
     // Print flow if not in test mode.
     #ifndef TEST
+    int id = pool->tasks[i]->id;
+    int val = pool->tasks[i]->value;
     if (i == 1) {
       printf("Step 1\n");
       printf("-- Gain: %d\n", pool->tasks[0]->value);
-      printf("-- Pick #1 [value=%d]\n", pool->tasks[0]->value);
+      printf("-- Pick #%d [value=%d]\n", pool->tasks[0]->id, pool->tasks[0]->value);
     }
     printf("Step %d\n", i + 1);
     if (nextGain > prevGain) {
       printf("-- Gain: %d\n", nextGain);
       if (prev != i - 1) {
-        printf("-- Drop #%d [value=%d] \n", i, pool->tasks[i-1]->value);
+        printf("-- Drop #%d [value=%d] \n", pool->tasks[i-1]->id, pool->tasks[i-1]->value);
       }
       if (prev != -1) {
-        printf("-- Pick #%d [value=%d] with #%d [gain=%d]\n", i + 1, pool->tasks[i]->value, prev + 1, gains[prev]);
+        printf("-- Pick #%d [value=%d] with #%d [gain=%d]\n", id, val, pool->tasks[prev]->id, gains[prev]);
       } else {
-        printf("-- Pick #%d [value=%d]\n", i + 1, pool->tasks[i]->value);
+        printf("-- Pick #%d [value=%d]\n", id, val);
       }
     } else {
       printf("-- Gain: %d\n", prevGain);
-      printf("-- Skip #%d [value=%d]\n", i + 1, pool->tasks[i]->value);
+      printf("-- Skip #%d [value=%d]\n", id, val);
     }
     #endif
   }
