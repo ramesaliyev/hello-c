@@ -185,6 +185,32 @@ int* calculateGains(Pool* pool) {
 
     // Choose bigger gain.
     gains[i] = nextGain > prevGain ? nextGain : prevGain;
+
+    // Print flow.
+    #ifndef TEST
+    if (i == 1) {
+      printf("Step 1\n");
+      printf("-- Gain: %d\n", pool->tasks[0]->value);
+      printf("-- Pick #1 [value=%d]\n", pool->tasks[0]->value);
+    }
+    printf("Step %d\n", i + 1);
+    if (nextGain > prevGain) {
+      printf("-- Gain: %d\n", nextGain);
+      
+      if (prev != i - 1) {
+        printf("-- Drop #%d [value=%d] \n", i, pool->tasks[i-1]->value);
+      }
+
+      if (prev != -1) {
+        printf("-- Pick #%d [value=%d] with #%d [gain=%d]\n", i + 1, pool->tasks[i]->value, prev + 1, gains[prev]);
+      } else {
+        printf("-- Pick #%d [value=%d]\n", i + 1, pool->tasks[i]->value);
+      }
+    } else {
+      printf("-- Gain: %d\n", prevGain);
+      printf("-- Prev chain is better.\n");
+    }
+    #endif
   }
 
   return gains;
@@ -193,9 +219,9 @@ int* calculateGains(Pool* pool) {
 // Calculate taken path of tasks by gains.
 int* calculatePath(Pool* pool, int* gains) {
   int* path = createIntArray(pool->count);
-  int j = pool->count - 1;
+  int i, j;
 
-  int i = pool->count - 1;
+  i = j = pool->count - 1;
   while (i >= 0) {
     if (i == 0 || gains[i] != gains[i - 1]) {
       path[j--] = i + 1;
@@ -286,7 +312,7 @@ int main(int argc, char** argv) {
   Pool* pool = NULL;
 
   // Choose between reading from a file or user input.
-  if (argc == 2) {
+  if (argc >= 2) {
     pool = createPoolFromFile(argv[1]);
   } else {
     pool = createPoolFromUserInput();
@@ -296,9 +322,22 @@ int main(int argc, char** argv) {
   int* gains = calculateGains(pool);
   int* path = calculatePath(pool, gains);
 
-  // Print result.
-  printf("%d |", gains[pool->count - 1]);
+  // Print results.
   int i;
+
+  // Also print detailed results if not in test mode.
+  #ifndef TEST
+  printf("Done.\n\n");
+  printf("Gains by steps: \n");
+  for (i = 0; i < pool->count; i++) {
+    printf("%d ", gains[i]);
+  }
+  printf("\n\n");
+  printf("Total gain and path: \n");
+  #endif
+
+  // Print final result.
+  printf("%d |", gains[pool->count - 1]);
   for (i = 0; i < pool->count; i++) {
     if (path[i] != 0) {
       printf(" %d", path[i]);
@@ -308,5 +347,7 @@ int main(int argc, char** argv) {
 
   // Free and exit.
   freePool(pool);
+  free(gains);
+  free(path);
   return 0;
 }

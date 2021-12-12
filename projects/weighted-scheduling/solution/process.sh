@@ -8,7 +8,13 @@ outputs=(
   "16 | 1 4 6"
 )
 
+compile() {
+  gcc main.c -std=c99 -pedantic -Wall -lm $1 -o main  
+}
+
 test() {
+  compile "-D TEST"
+
   for i in ${!files[@]}; do
     output=$(./main ${files[$i]})
     
@@ -22,8 +28,8 @@ test() {
 }
 
 # Always compile first.
-gcc main.c -std=c99 -pedantic -Wall -lm -o main
+compile
 
 # Main commands
 [[ $1 = "test" ]] && test # run tests
-[[ $1 != "test" ]] && ./main $1 # run program with arg
+[[ $1 != "test" ]] && ./main $1 $2 # run program with arg
