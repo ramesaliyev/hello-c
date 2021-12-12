@@ -17,7 +17,7 @@
  * (3) Generic helper functions.
  * (4) Generic sorting implementation based on merge-sort.
  * (5) Problem Solution
- * (6) Extra: Reading tasks from file.
+ * (6) Reading tasks from file.
  * (7) Getting tasks from user.
  * (8) Main (Entry Point)
  * 
@@ -252,8 +252,7 @@ int* calculatePath(Pool* pool, int* gains) {
 }
 
 /**
- * (6) Extra: Reading tasks from file.
- * This is implemented for testing purposes.
+ * (6) Reading tasks from file.
  */
 Pool* createPoolFromFile(char* filename) {
   FILE* file = fopen(filename, "r");
