@@ -27,6 +27,7 @@
  * (1) Program configuration definitions.
  */
 #define LINESIZE 256
+#define DEFAULT_INPUT "sample.txt"
 
 /**
  * (2) Data types and structures.
@@ -329,10 +330,12 @@ int main(int argc, char** argv) {
   Pool* pool = NULL;
 
   // Choose between reading from a file or user input.
-  if (argc >= 2) {
-    pool = createPoolFromFile(argv[1]);
-  } else {
+  char* filename = DEFAULT_INPUT;
+  if (argc >= 2 && strcmp(argv[1], "input") == 0) {
     pool = createPoolFromUserInput();
+  } else {
+    if (argc >= 2) filename = argv[1];
+    pool = createPoolFromFile(filename);
   }
 
   sortPool(pool);
