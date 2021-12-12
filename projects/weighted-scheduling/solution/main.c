@@ -204,7 +204,7 @@ int* calculateGains(Pool* pool) {
     // Choose bigger gain.
     gains[i] = nextGain > prevGain ? nextGain : prevGain;
 
-    // Print flow.
+    // Print flow if not in test mode.
     #ifndef TEST
     if (i == 1) {
       printf("Step 1\n");
@@ -214,11 +214,9 @@ int* calculateGains(Pool* pool) {
     printf("Step %d\n", i + 1);
     if (nextGain > prevGain) {
       printf("-- Gain: %d\n", nextGain);
-      
       if (prev != i - 1) {
         printf("-- Drop #%d [value=%d] \n", i, pool->tasks[i-1]->value);
       }
-
       if (prev != -1) {
         printf("-- Pick #%d [value=%d] with #%d [gain=%d]\n", i + 1, pool->tasks[i]->value, prev + 1, gains[prev]);
       } else {
@@ -226,7 +224,7 @@ int* calculateGains(Pool* pool) {
       }
     } else {
       printf("-- Gain: %d\n", prevGain);
-      printf("-- Prev chain is better.\n");
+      printf("-- Skip #%d [value=%d]\n", i + 1, pool->tasks[i]->value);
     }
     #endif
   }
