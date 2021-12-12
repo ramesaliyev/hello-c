@@ -20,6 +20,7 @@ typedef struct Pool Pool;
 typedef int (*IndexComparator) (void*, int, int);
 
 struct Task {
+  int id;
   int start;
   int finish;
   int duration;
@@ -117,8 +118,9 @@ void sortPool(Pool* pool) {
  * () Problem Solution
  */
 // Memory allocation and deallocations for our data types.
-Task* createTask(int start, int duration, int value) {
+Task* createTask(int id, int start, int duration, int value) {
   Task* task = (Task*) malloc(sizeof(Task));
+  task->id = id;
   task->start = start;
   task->finish = start + duration;
   task->duration = duration;
@@ -262,7 +264,8 @@ Pool* createPoolFromFile(char* filename) {
     start = atoi(strtok(line, " "));
     duration = atoi(strtok(NULL, " "));
     value = atoi(strtok(NULL, " "));
-    pool->tasks[index++] = createTask(start, duration, value);
+    pool->tasks[index] = createTask(index + 1, start, duration, value);
+    index++;
   }
 
   // Shrink memory pool of Pool if necessary.
@@ -299,7 +302,7 @@ Pool* createPoolFromUserInput() {
     printf("    Value: ");
     scanf("%d", &value);
 
-    pool->tasks[i] = createTask(start, duration, value);
+    pool->tasks[i] = createTask(i + 1, start, duration, value);
   }
 
   return pool;
@@ -340,7 +343,7 @@ int main(int argc, char** argv) {
   printf("%d |", gains[pool->count - 1]);
   for (i = 0; i < pool->count; i++) {
     if (path[i] != 0) {
-      printf(" %d", path[i]);
+      printf(" %d", pool->tasks[path[i] - 1]->id);
     }
   }
   printf("\n");
