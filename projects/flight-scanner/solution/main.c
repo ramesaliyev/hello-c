@@ -147,37 +147,46 @@ void indexSort(int* arr, int l, int r, void* data, IndexComparator cmp) {
   }
 }
 
-// Comparator for custom data type.
-// int taskComparator(void* data, int i, int j) {
-//   Pool* pool = (Pool*) data; // Cast data type.
-//   Task* t1 = pool->tasks[i];
-//   Task* t2 = pool->tasks[j];
-//   return t1->finish - t2->finish;
-// }
+int pathPriceComparator(void* data, int i, int j) {
+  Paths* paths = (Paths*) data; // Cast data type.
+  Path* p1 = paths->paths[i];
+  Path* p2 = paths->paths[j];
+  return p1->price - p2->price;
+}
 
-// Main sort function for our data type Pool.
-// void sortPool(Pool* pool) {
-//   int* indexes = createIntArray(pool->count);
+int pathDurationComparator(void* data, int i, int j) {
+  Paths* paths = (Paths*) data; // Cast data type.
+  Path* p1 = paths->paths[i];
+  Path* p2 = paths->paths[j];
+  return p1->duration - p2->duration;
+}
 
-//   // Create 0...n-1 index array.
-//   int i = 0;
-//   for (i = 0; i < pool->count; i++) indexes[i] = i;
+void sortPaths(Paths* paths, SortBy sortBy) {
+  int* indexes = createIntArray(paths->count);
 
-//   // Do index sort by our pool.
-//   indexSort(indexes, 0, pool->count - 1, pool, taskComparator);
+  // Create 0...n-1 index array.
+  int i = 0;
+  for (i = 0; i < paths->count; i++) indexes[i] = i;
 
-//   // Reflect sorted indexes into our pool.
-//   Task** tasks = (Task**) calloc(pool->count, sizeof(Task*));
-//   for (i = 0; i < pool->count; i++) {
-//     tasks[i] = pool->tasks[indexes[i]];
-//   }
+  // Determine comparator.
+  IndexComparator pathComparator = sortBy == SortByPrice ? 
+    pathPriceComparator : pathDurationComparator;
 
-//   // Put sorted tasks in place, free previous one.
-//   free(pool->tasks);
-//   pool->tasks = tasks;
+  // Do index sort by our paths.
+  indexSort(indexes, 0, paths->count - 1, paths, pathComparator);
+
+  // Reflect sorted indexes into our pool.
+  Path** npaths = (Path**) calloc(paths->count, sizeof(Path*));
+  for (i = 0; i < paths->count; i++) {
+    npaths[i] = paths->paths[indexes[i]];
+  }
+
+  // Put sorted tasks in place, free previous one.
+  free(paths->paths);
+  paths->paths = npaths;
   
-//   free(indexes);
-// }
+  free(indexes);
+}
 
 /**
  * (5) Problem Solution
@@ -388,6 +397,8 @@ int main(int argc, char** argv) {
 
   // Find all possible flight paths.
   Paths* paths = findPaths(graph, fromId, toId, stops);
+  sortPaths(paths, SortByPrice);
+  // sortPaths(paths, SortByDuration);
 
   printf("%s --> %s\n\n", from, to);
   int i, j;
