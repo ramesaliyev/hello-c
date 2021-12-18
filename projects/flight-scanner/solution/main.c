@@ -35,7 +35,12 @@
 typedef struct Cost Cost;
 typedef struct City City;
 typedef struct Graph Graph;
+typedef struct Path Path;
+typedef struct Paths Paths;
 typedef int (*IndexComparator) (void*, int, int);
+
+enum SortBy {SortByPrice, SortByDuration}; 
+typedef enum SortBy SortBy;
 
 struct Cost {
   int price;
@@ -53,6 +58,21 @@ struct Graph {
   Cost*** costs; // edges (adjacency matrix)
 };
 
+struct Path {
+  int stops;
+  int price;
+  int duration;
+  int* path;
+};
+
+struct Paths {
+  int from;
+  int to;
+  int count; // total number of paths
+  int stops; // path length
+  int** paths;
+};
+
 /**
  * (3) Generic helper functions.
  */
@@ -68,6 +88,12 @@ char* copystr(char* str) {
 
 int* createIntArray(int len) {
   return (int*) calloc(len, sizeof(int));
+}
+
+int* copyIntArray(int* arr, int len) {
+  int* copy = createIntArray(len);
+  memcpy(copy, arr, len * sizeof(int));
+  return copy;
 }
 
 /**
@@ -177,6 +203,22 @@ Cost* createCost(int price, int hours, int minutes) {
   return cost;
 }
 
+Paths* createPaths(int from, int to, int stops) {
+  Paths* paths = (Paths*) malloc(sizeof(Paths));
+  paths->paths = NULL;
+  paths->stops = stops;
+  paths->from = from;
+  paths->to = to;
+  paths->count = 0;
+  return paths;
+}
+
+void addPath(Paths* paths, int* path) {
+  paths->paths = (int**) realloc(paths->paths, (paths->count + 1) * sizeof(int*));
+  paths->paths[paths->count] = path;
+  paths->count++;
+}
+
 int getCityIdByName(Graph* graph, char* name) {
   int i;
   for (i = 0; i < graph->cityCount; i++) {
@@ -184,6 +226,33 @@ int getCityIdByName(Graph* graph, char* name) {
     if (strcmp(graph->cities[i]->name, name) == 0) return i;
   }
   return -1;
+}
+
+void bfsPath(Graph* graph, Paths* paths, int* path, int i) {
+  int id = i == 0 ? paths->from : path[i - 1];
+
+  int j;
+  for (j = 0; j < graph->cityCount; j++) {
+    Cost* cost = graph->costs[id][j];
+
+    if (cost != NULL) {
+      if (j == paths->to) {
+        path[i] = -1; // mark end of the path. CONVERT THIS TO PATH TYPE
+        addPath(paths, path);
+      } else if (i < paths->stops) {
+        // Check if j already in path, continue if it is.
+        int* cpath = copyIntArray(path, paths->stops);
+        cpath[i] = j;
+        bfsPath(graph, paths, cpath, i + 1);
+      }
+    }    
+  }
+}
+
+Paths* findPaths(Graph* graph, int from, int to, int stops) {
+  Paths* paths = createPaths(from, to, stops);
+  bfsPath(graph, paths, createIntArray(stops), 0);
+  return paths;
 }
 
 /**
@@ -279,24 +348,52 @@ int main(int argc, char** argv) {
   Graph* graph = createGraphFromFile(filename);
   if (graph == NULL) return 1;
 
-  int i,j;
-  Cost*** costs = graph->costs;
-  City** cities = graph->cities;
-  for (i = 0; i < graph->cityCount; i++) {
-    for (j = 0; j < graph->cityCount; j++) {
-      Cost* cost = costs[i][j];
-      City* from = cities[i]; 
-      City* to = cities[j];
+  Paths* paths = findPaths(graph, 0, 5, 3);
 
-      printf("[%d|%d] %s->%s ", i, j, from->name, to->name);
-      if (cost != NULL) {
-        printf("%d$ %dm", cost->price, cost->duration);
-      } else {
-        printf(" (no flights)");
-      }
-      printf("\n");
-    } 
+  int i, j;
+  for (i = 0; i<paths->count; i++) {
+    for (j = 0; j<paths->stops; j++) {
+      printf("%d ", paths->paths[i][j]);
+    }
+    printf("\n");
   }
+
+  // int from = 0;
+  // int to = 1;
+  // int stops = 1;
+  // SortBy sortBy = SortByPrice;
+
+  // Paths* paths = createPaths(1,2, 3);
+  // int* a = createIntArray(3);
+  // addPath(paths, a);
+  // int* b = createIntArray(3);
+  // addPath(paths, b);
+
+  // a[0] = 1;
+  // a[1] = 3;
+  // a[2] = 5;
+
+  // b[0] = 2;
+  // b[1] = 4;
+  // b[2] = 6;
+
+  // int* c = copyIntArray(b, 3);
+  // addPath(paths, c);
+
+  // c[0] = 1;
+  // c[1] = 3;
+  // c[2] = 5;
+
+  // int i, j;
+  // for (i = 0; i<paths->count; i++) {
+  //   for (j = 0; j<paths->stops; j++) {
+  //     printf("%d ", paths->paths[i][j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  // int* arr = createIntArray(0);
+  // if (arr == NULL) printf("BULL\n");
 
   return 0;
 }
