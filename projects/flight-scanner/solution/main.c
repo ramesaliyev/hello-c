@@ -379,22 +379,23 @@ int main(int argc, char** argv) {
   if (graph == NULL) return 1;
 
   // Ask for user input.
-  char* from = "A";
-  char* to = "H";
+  char* from = "Londra";
+  char* to = "Paris";
 
   int fromId = getCityIdByName(graph, from);
   int toId = getCityIdByName(graph, to);
-  int stops = 6;
+  int stops = 30;
 
   // Find all possible flight paths.
   Paths* paths = findPaths(graph, fromId, toId, stops);
 
+  printf("%s --> %s\n\n", from, to);
   int i, j;
   for (i = 0; i<paths->count; i++) {
     Path* path = paths->paths[i];
 
     if (path->stops == 0) {
-      printf("direct flight");
+      printf("DIRECT ");
     } else {
       for (j = 0; j < path->stops; j++) {
         int id = path->path[j];
@@ -404,6 +405,7 @@ int main(int argc, char** argv) {
       }
     }
     
+    printf("--- %d$ %dm", path->price, path->duration);
     printf("\n");
   }
 
