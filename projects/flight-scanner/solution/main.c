@@ -59,18 +59,18 @@ struct Graph {
 };
 
 struct Path {
-  int stops;
-  int price;
-  int duration;
-  int* path;
+  int stops; // actual stops count of path
+  int price; // total price of path
+  int duration; // total duration of path (durations + (stops*60))
+  int* path; // array of city ids
 };
 
 struct Paths {
   int from;
   int to;
   int count; // total number of paths
-  int stops; // path length
-  int** paths;
+  int stops; // max stops in paths
+  Path** paths;
 };
 
 /**
@@ -94,6 +94,14 @@ int* copyIntArray(int* arr, int len) {
   int* copy = createIntArray(len);
   memcpy(copy, arr, len * sizeof(int));
   return copy;
+}
+
+bool inArray(int* arr, int len, int val) {
+  int i;
+  for (i = 0; i < len; i++) {
+    if (arr[i] == val) return true;
+  }
+  return false;
 }
 
 /**
@@ -213,10 +221,34 @@ Paths* createPaths(int from, int to, int stops) {
   return paths;
 }
 
-void addPath(Paths* paths, int* path) {
-  paths->paths = (int**) realloc(paths->paths, (paths->count + 1) * sizeof(int*));
-  paths->paths[paths->count] = path;
+Path* createPath(Graph* graph, int* patharr, int from, int to, int stops) {
+  Path* path = (Path*) malloc(sizeof(Path));
+  path->stops = stops;
+  path->duration = stops * 60;
+  path->price = 0;
+  path->path = copyIntArray(patharr, stops);
+
+  int i, a, b;
+  for (i = 0; i <= stops; i++) {
+    a = i == 0 ? from : patharr[i - 1]; // left city
+    b = i == stops ? to : patharr[i]; // right city
+
+    Cost* cost = graph->costs[a][b];
+    path->duration += cost->duration;
+    path->price += cost->price;
+  }
+
+  return path;
+} 
+
+void addPath(Graph* graph, Paths* paths, int* path, int stops) {
+  paths->paths = (Path**) realloc(paths->paths, (paths->count + 1) * sizeof(Path*));
+  paths->paths[paths->count] = createPath(graph, path, paths->from, paths->to, stops);
   paths->count++;
+}
+
+bool notInPath(Paths* paths, int* path, int len, int val) {
+  return (val != paths->from) && !inArray(path, len, val);
 }
 
 int getCityIdByName(Graph* graph, char* name) {
@@ -237,16 +269,16 @@ void bfsPath(Graph* graph, Paths* paths, int* path, int i) {
 
     if (cost != NULL) {
       if (j == paths->to) {
-        path[i] = -1; // mark end of the path. CONVERT THIS TO PATH TYPE
-        addPath(paths, path);
-      } else if (i < paths->stops) {
-        // Check if j already in path, continue if it is.
-        int* cpath = copyIntArray(path, paths->stops);
-        cpath[i] = j;
-        bfsPath(graph, paths, cpath, i + 1);
+        addPath(graph, paths, path, i);
+      } else if (i < paths->stops && notInPath(paths, path, i, j)) {
+        int* subpath = copyIntArray(path, paths->stops);
+        subpath[i] = j;
+        bfsPath(graph, paths, subpath, i + 1);
       }
     }    
   }
+
+  free(path);
 }
 
 Paths* findPaths(Graph* graph, int from, int to, int stops) {
@@ -348,52 +380,26 @@ int main(int argc, char** argv) {
   Graph* graph = createGraphFromFile(filename);
   if (graph == NULL) return 1;
 
-  Paths* paths = findPaths(graph, 0, 5, 3);
+  Paths* paths = findPaths(graph, 0, 5, 6);
 
   int i, j;
   for (i = 0; i<paths->count; i++) {
-    for (j = 0; j<paths->stops; j++) {
-      printf("%d ", paths->paths[i][j]);
+    Path* path = paths->paths[i];
+
+    if (path->stops == 0) {
+      printf("direct flight");
+    } else {
+      for (j = 0; j < path->stops; j++) {
+        int id = path->path[j];
+        if (id != -1) {
+          printf("%s ", graph->cities[id]->name);
+        }
+      }
     }
+    
     printf("\n");
   }
 
-  // int from = 0;
-  // int to = 1;
-  // int stops = 1;
-  // SortBy sortBy = SortByPrice;
-
-  // Paths* paths = createPaths(1,2, 3);
-  // int* a = createIntArray(3);
-  // addPath(paths, a);
-  // int* b = createIntArray(3);
-  // addPath(paths, b);
-
-  // a[0] = 1;
-  // a[1] = 3;
-  // a[2] = 5;
-
-  // b[0] = 2;
-  // b[1] = 4;
-  // b[2] = 6;
-
-  // int* c = copyIntArray(b, 3);
-  // addPath(paths, c);
-
-  // c[0] = 1;
-  // c[1] = 3;
-  // c[2] = 5;
-
-  // int i, j;
-  // for (i = 0; i<paths->count; i++) {
-  //   for (j = 0; j<paths->stops; j++) {
-  //     printf("%d ", paths->paths[i][j]);
-  //   }
-  //   printf("\n");
-  // }
-
-  // int* arr = createIntArray(0);
-  // if (arr == NULL) printf("BULL\n");
-
+  free(paths);
   return 0;
 }
