@@ -372,15 +372,22 @@ Graph* createGraphFromFile(char* filename) {
  */
 int main(int argc, char** argv) {
   char* filename = DEFAULT_INPUT;
-  
-  if (argc >= 2) {
-    filename = argv[1];
-  }
+  if (argc >= 2) filename = argv[1];
 
+  // Read file and create graph from it.
   Graph* graph = createGraphFromFile(filename);
   if (graph == NULL) return 1;
 
-  Paths* paths = findPaths(graph, 0, 5, 6);
+  // Ask for user input.
+  char* from = "A";
+  char* to = "H";
+
+  int fromId = getCityIdByName(graph, from);
+  int toId = getCityIdByName(graph, to);
+  int stops = 6;
+
+  // Find all possible flight paths.
+  Paths* paths = findPaths(graph, fromId, toId, stops);
 
   int i, j;
   for (i = 0; i<paths->count; i++) {
