@@ -280,13 +280,11 @@ int getCityIdByName(Graph* graph, char* name) {
 }
 
 void dfsPath(Graph* graph, Paths* paths, int* path, int i) {
-  int id = i == 0 ? paths->from : path[i - 1];
+  int node = i == 0 ? paths->from : path[i - 1];
 
   int j;
   for (j = 0; j < graph->cityCount; j++) {
-    Cost* cost = graph->costs[id][j];
-
-    if (cost != NULL) {
+    if (graph->costs[node][j] != NULL) {
       if (j == paths->to) {
         addPath(graph, paths, path, i);
       } else if (i < paths->stops && notInPath(paths, path, i, j)) {
