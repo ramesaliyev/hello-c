@@ -1,7 +1,0 @@
-ist lbg 03 00 200
-ist jfk 10 50 1000
-lbg jfk 00 50 100
-ber lbg 00 50 110
-ber ist 02 40 150
-jfk ber 08 20 600
-ank ist 00 40 50

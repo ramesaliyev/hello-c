@@ -28,6 +28,7 @@
  */
 #define LINESIZE 256
 #define DEFAULT_INPUT "sample.txt"
+#define INDENT " "
 
 /**
  * (2) Data types and structures.
@@ -39,7 +40,7 @@ typedef struct Path Path;
 typedef struct Paths Paths;
 typedef int (*IndexComparator) (void*, int, int);
 
-enum SortBy {SortByPrice, SortByDuration}; 
+enum SortBy {SortByNull, SortByPrice, SortByDuration}; 
 typedef enum SortBy SortBy;
 
 struct Cost {
@@ -102,6 +103,15 @@ bool inArray(int* arr, int len, int val) {
     if (arr[i] == val) return true;
   }
   return false;
+}
+
+FILE* openFile(char* filename, char* as) {
+  FILE* file = fopen(filename, as);
+  if (file == NULL) {
+    printf("Error: Could not open file; name=%s, mode=%s\n", filename, as);
+    return NULL;
+  };
+  return file;
 }
 
 /**
@@ -373,8 +383,218 @@ Graph* createGraphFromFile(char* filename) {
 }
 
 /**
- * (7) Getting user input.
+ * (7) Handle User Interaction.
  */
+void saveSearchResults(Graph* graph, Paths* paths, SortBy sortBy) {
+  char filename[LINESIZE];
+  printf("Filename: ");
+  scanf("%s", filename);
+
+  FILE* file = openFile(filename, "wb");
+
+  // Create separator line.
+  char separator[101];
+  memset(separator, '-', 100);
+  separator[100] = '\0';
+
+  fprintf(file, "%s\n", separator);
+  fprintf(file, "Flights from %s to %s with at most %d stops. Sorted by %s.\n",
+    graph->cities[paths->from]->name,
+    graph->cities[paths->to]->name,
+    paths->stops, sortBy == SortByDuration ? "duration" : "price"
+  );
+  fprintf(file, "%s\n", separator);
+  fprintf(file, "%-15s%-15s%-40s%-10s%-10s%-10s\n",
+    "Source", "Destination", "Stops", "Hour", "Minute", "Price");
+  fprintf(file, "%s\n", separator);
+  
+  int i, j;
+  for (i = 0; i < paths->count; i++) {
+    fprintf(file, "%-15s", graph->cities[paths->from]->name);
+    fprintf(file, "%-15s", graph->cities[paths->to]->name);
+
+    Path* path = paths->paths[i];
+
+    if (path->stops == 0) {
+      fprintf(file, "%-40s", "None");
+    } else {
+      char* stopNames = mallocstr(LINESIZE);
+      
+      for (j = 0; j < path->stops; j++) {
+        int cityId = path->path[j];
+
+        if (j != 0) strcat(stopNames, ", ");
+        strcat(stopNames, graph->cities[cityId]->name);
+      }
+
+      fprintf(file, "%-40s", stopNames);
+      free(stopNames);
+    }
+
+    char buffer[20];
+    snprintf(buffer, sizeof(buffer), "%dh", path->duration / 60);
+    fprintf(file, "%-10s", buffer);
+    snprintf(buffer, sizeof(buffer), "%dm", path->duration % 60);
+    fprintf(file, "%-10s", buffer);
+    snprintf(buffer, sizeof(buffer), "%d$", path->price);
+    fprintf(file, "%-10s", buffer);
+
+    fprintf(file, "\n");
+  }
+
+  printf("Search results saved into file %s\n\n", filename);
+  fclose(file);
+}
+
+int interactiveUserSearch(Graph* graph) {
+  // Search and sort criteria.
+  char from[LINESIZE];
+  char to[LINESIZE];
+  char sort[LINESIZE];
+  int stops = 0;
+  SortBy sortBy = SortByNull;
+  int fromId = -1;
+  int toId = -1;
+
+  // Get user input.
+  printf("Please enter search criteria:\n");
+  
+  while (fromId == -1) {
+    printf(INDENT"From: ");
+    scanf("%s", from);
+
+    fromId = getCityIdByName(graph, from);
+    if (fromId == -1) {
+      printf(INDENT"Unknown city specified.\n\n");
+    }
+  }
+
+  while (toId == -1) {
+    printf(INDENT"To: ");
+    scanf("%s", to);
+
+    toId = getCityIdByName(graph, to);
+    if (toId == -1) {
+      printf(INDENT"Unknown city specified.\n\n");
+    }
+  }
+
+  printf(INDENT"Stops (0 for direct flights): ");
+  scanf("%d", &stops);
+  
+  while (sortBy == SortByNull) {
+    printf(INDENT"Sort criterion? Enter p for price, d for duration: ");
+    scanf("%s", sort);
+
+    if (strcmp(sort, "p") == 0) {
+      sortBy = SortByPrice;
+    } else if (strcmp(sort, "d") == 0) {
+      sortBy = SortByDuration;
+    } else {
+      printf(INDENT"Unknown sort criterion.\n\n");
+    }
+  }
+
+  // Find all possible flight paths.
+  Paths* paths = findPaths(graph, fromId, toId, stops);
+  sortPaths(paths, sortBy);
+
+  // Create separator line.
+  char separator[101];
+  memset(separator, '-', 100);
+  separator[100] = '\0';
+
+  if (paths->count == 0) {
+    Paths* pathsWithStops = findPaths(graph, fromId, toId, graph->cityCount - 2);
+
+    printf("\n");
+    if (stops == 0) {
+      printf("No direct flight found between given cities.\n");
+    } else {
+      printf("No flights found for given criteria.\n");
+    }
+
+    if (pathsWithStops->count == 0) {
+      printf("There are no possible flight scenarios between given cities.\n");
+      printf("Not with even %d stops.\n", graph->cityCount - 2);
+    } else {
+      printf("But there are flights between given cities with more stops.\n");
+    }
+    
+    printf("\n");
+    return 0;
+  }
+
+  printf("%s\n", separator);
+  printf("Flights from %s to %s with at most %d stops. Sorted by %s.\n",
+    from, to, stops, sortBy == SortByDuration ? "duration" : "price");
+  printf("%s\n", separator);
+  printf("%-15s%-15s%-40s%-10s%-10s%-10s\n",
+    "Source", "Destination", "Stops", "Hour", "Minute", "Price");
+  printf("%s\n", separator);
+
+  int i, j;
+  for (i = 0; i < paths->count; i++) {
+    printf("%-15s", graph->cities[paths->from]->name);
+    printf("%-15s", graph->cities[paths->to]->name);
+
+    Path* path = paths->paths[i];
+
+    if (path->stops == 0) {
+      printf("%-40s", "None");
+    } else {
+      char* stopNames = mallocstr(LINESIZE);
+      
+      for (j = 0; j < path->stops; j++) {
+        int cityId = path->path[j];
+
+        if (j != 0) strcat(stopNames, ", ");
+        strcat(stopNames, graph->cities[cityId]->name);
+      }
+
+      printf("%-40s", stopNames);
+      free(stopNames);
+    }
+
+    char buffer[20];
+    snprintf(buffer, sizeof(buffer), "%dh", path->duration / 60);
+    printf("%-10s", buffer);
+    snprintf(buffer, sizeof(buffer), "%dm", path->duration % 60);
+    printf("%-10s", buffer);
+    snprintf(buffer, sizeof(buffer), "%d$", path->price);
+    printf("%-10s", buffer);
+
+    printf("\n");
+  }
+  printf("%s\n", separator);
+  printf("Commands:\n");
+  printf(INDENT"save - save results to file \n");
+  printf(INDENT"search - do another search \n");
+  printf(INDENT"exit - exit from program \n");
+  printf("\n");
+
+  char cmd[LINESIZE];
+  
+  while (true) {
+    scanf("%s", cmd);
+
+    if (strcmp(cmd, "save") == 0) {
+      saveSearchResults(graph, paths, sortBy);
+      free(paths);
+      return 0;
+    } else if (strcmp(cmd, "search") == 0) {
+      free(paths);
+      return 1;
+    } else if (strcmp(cmd, "exit") == 0) {
+      exit(0);
+    } else {
+      printf("Unknown command.\n\n");
+    }
+  }
+
+  free(paths);
+  return 0;
+}
 
 /**
  * (8) Main (Entry Point)
@@ -387,39 +607,27 @@ int main(int argc, char** argv) {
   Graph* graph = createGraphFromFile(filename);
   if (graph == NULL) return 1;
 
+  // Print welcome message.
+  printf("Welcome to YTUSkyScanner 2021\n");
+
   // Ask for user input.
-  char* from = "Londra";
-  char* to = "Paris";
-
-  int fromId = getCityIdByName(graph, from);
-  int toId = getCityIdByName(graph, to);
-  int stops = 30;
-
-  // Find all possible flight paths.
-  Paths* paths = findPaths(graph, fromId, toId, stops);
-  sortPaths(paths, SortByPrice);
-  // sortPaths(paths, SortByDuration);
-
-  printf("%s --> %s\n\n", from, to);
-  int i, j;
-  for (i = 0; i<paths->count; i++) {
-    Path* path = paths->paths[i];
-
-    if (path->stops == 0) {
-      printf("DIRECT ");
-    } else {
-      for (j = 0; j < path->stops; j++) {
-        int id = path->path[j];
-        if (id != -1) {
-          printf("%s ", graph->cities[id]->name);
-        }
-      }
-    }
-    
-    printf("--- %d$ %dm", path->price, path->duration);
+  while (true) {
+    printf("Commands:\n");
+    printf(INDENT"search - search for flights \n");
+    printf(INDENT"exit - exit from program \n");
     printf("\n");
-  }
 
-  free(paths);
+    char cmd[LINESIZE];
+    scanf("%s", cmd);
+
+    if (strcmp(cmd, "exit") == 0) {
+      return 0;
+    } else if (strcmp(cmd, "search") == 0) {
+      while (interactiveUserSearch(graph));
+    } else {
+      printf("Unknown command.\n\n");
+    }
+  }
+  
   return 0;
 }
