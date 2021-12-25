@@ -476,6 +476,9 @@ int interactiveUserSearch(Graph* graph) {
     toId = getCityIdByName(graph, to);
     if (toId == -1) {
       printf(INDENT"Unknown city specified.\n\n");
+    } else if (toId == fromId) {
+      printf(INDENT"Source and destination cannot be the same city.\n\n");
+      toId = -1;
     }
   }
 
