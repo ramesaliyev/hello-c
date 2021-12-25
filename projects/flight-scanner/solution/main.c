@@ -279,7 +279,7 @@ int getCityIdByName(Graph* graph, char* name) {
   return -1;
 }
 
-void bfsPath(Graph* graph, Paths* paths, int* path, int i) {
+void dfsPath(Graph* graph, Paths* paths, int* path, int i) {
   int id = i == 0 ? paths->from : path[i - 1];
 
   int j;
@@ -292,7 +292,7 @@ void bfsPath(Graph* graph, Paths* paths, int* path, int i) {
       } else if (i < paths->stops && notInPath(paths, path, i, j)) {
         int* subpath = copyIntArray(path, paths->stops);
         subpath[i] = j;
-        bfsPath(graph, paths, subpath, i + 1);
+        dfsPath(graph, paths, subpath, i + 1);
       }
     }    
   }
@@ -302,7 +302,7 @@ void bfsPath(Graph* graph, Paths* paths, int* path, int i) {
 
 Paths* findPaths(Graph* graph, int from, int to, int stops) {
   Paths* paths = createPaths(from, to, stops);
-  bfsPath(graph, paths, createIntArray(stops), 0);
+  dfsPath(graph, paths, createIntArray(stops), 0);
   return paths;
 }
 
