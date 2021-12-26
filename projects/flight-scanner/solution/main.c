@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdarg.h>
 
 /**
  * README
@@ -279,13 +280,24 @@ int getCityIdByName(Graph* graph, char* name) {
   return -1;
 }
 
+void dfsPrint(int i, char* format, ...) {
+  printf("%*s", i * 3, "");
+
+  va_list argptr;
+  va_start(argptr, format);
+  vfprintf(stdout, format, argptr);
+  va_end(argptr);
+}
+
 void dfsPath(Graph* graph, Paths* paths, int* path, int i) {
   int node = i == 0 ? paths->from : path[i - 1];
+  dfsPrint(i, ">> [%d] %s\n", i, graph->cities[node]->name);
 
   int j;
   for (j = 0; j < graph->cityCount; j++) {
     if (graph->costs[node][j] != NULL) {
       if (j == paths->to) {
+        dfsPrint(i, "** %s\n", graph->cities[j]->name);
         addPath(graph, paths, path, i);
       } else if (i < paths->stops && notInPath(paths, path, i, j)) {
         int* subpath = copyIntArray(path, paths->stops);
@@ -295,6 +307,7 @@ void dfsPath(Graph* graph, Paths* paths, int* path, int i) {
     }    
   }
 
+  dfsPrint(i, "<<\n");
   free(path);
 }
 
@@ -496,9 +509,13 @@ int interactiveUserSearch(Graph* graph) {
     }
   }
 
+  printf("\n");
+
   // Find all possible flight paths.
   Paths* paths = findPaths(graph, fromId, toId, stops);
   sortPaths(paths, sortBy);
+
+  printf("\n");
 
   // Create separator line.
   char separator[101];
