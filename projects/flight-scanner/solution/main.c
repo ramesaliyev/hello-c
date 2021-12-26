@@ -79,7 +79,9 @@ struct Paths {
  * (3) Generic helper functions.
  */
 char* mallocstr(int size) {
-  return (char*) malloc((size + 1) * sizeof(char));
+  char* str = (char*) malloc((size + 1) * sizeof(char));
+  str[0] = '\0';
+  return str;
 }
 
 char* copystr(char* str) {
