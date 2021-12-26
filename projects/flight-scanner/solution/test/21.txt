@@ -1,0 +1,8 @@
+Istanbul Dublin 4 30 250
+Istanbul Toronto 9 40 450
+Dublin Berlin 5 10 170
+Washington Toronto 3 20 90
+Washington Dublin 6 20 300
+Toronto Moscow 6 15 300
+Moscow Istanbul 4 0 200
+Moscow Berlin 5 20 400

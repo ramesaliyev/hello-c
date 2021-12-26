@@ -1,0 +1,6 @@
+Ankara Baku 3 0 250
+Paris Baku 6 30 450
+London Rome 4 10 200
+Oslo Ankara 5 10 300
+Oslo Rome 4 10 500
+Rome Baku 7 20 470

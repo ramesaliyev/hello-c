@@ -1,0 +1,5 @@
+Singapore Tokyo 2 20 100
+Tokyo Madrid 10 0 500 
+Madrid Ottawa 6 10 400
+Ottawa Sofia 7 20 600
+Sofia Vienna 3 40 250
