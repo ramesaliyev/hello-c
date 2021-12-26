@@ -19,7 +19,7 @@
  * (4) Generic sorting implementation based on merge-sort.
  * (5) Problem Solution
  * (6) Reading flights from file.
- * (7) Getting user input.
+ * (7) Handle User Interaction.
  * (8) Main (Entry Point)
  * 
  */
