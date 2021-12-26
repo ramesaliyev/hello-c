@@ -342,6 +342,7 @@ Graph* createGraphFromFile(char* filename) {
     if ((nextCityId + 1) >= graph->cityCount) {
       graph->cityCount *= 2;
       graph->cities = (City**) realloc(graph->cities, graph->cityCount * sizeof(City*));
+      memset((graph->cities + nextCityId), 0, (graph->cityCount - nextCityId) * sizeof(City*));
     }
     
     from = strtok(line, " ");
