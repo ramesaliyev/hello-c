@@ -319,5 +319,25 @@ int main() {
   putIntoCache(cache, createData(1008, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
   printCache(cache);
 
+  printf("\nPut 1009-1015\n");
+  putIntoCache(cache, createData(1009, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+  putIntoCache(cache, createData(1010, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+  putIntoCache(cache, createData(1011, "BinONBIR", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+  putIntoCache(cache, createData(1012, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+  putIntoCache(cache, createData(1013, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+  putIntoCache(cache, createData(1014, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+  putIntoCache(cache, createData(1015, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+
+  Data* data = getFromCache(cache, 1011);
+  printf("Got %s\n", data->name);
+  printCache(cache);
+
   return 0;
 }
