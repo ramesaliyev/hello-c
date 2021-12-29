@@ -35,8 +35,7 @@ struct ListNode {
 
 struct HashRow {
   int id;
-  int listIndex;
-  bool isRemoved;
+  int listIndex; // -1 if removed
 };
 
 struct HashTable {
@@ -87,7 +86,6 @@ HashRow* createHashRow(int id) {
   HashRow* row = (HashRow*) malloc(sizeof(HashRow));
   row->id = id;
   row->listIndex = -1;
-  row->isRemoved = false;
   return row;
 }
 
@@ -146,7 +144,7 @@ void putIntoHashTable(HashTable* hashTable, HashRow* row) {
   while (i < hashTable->size && !found) {
     hash = calculateHash(hashTable->size, i++, row->id);
     HashRow* currentRow = hashTable->rows[hash];
-    found = (currentRow == NULL || currentRow->isRemoved); 
+    found = (currentRow == NULL || currentRow->listIndex == -1); 
   }
 
   // if available row found
@@ -169,7 +167,7 @@ HashRow* getFromHashTable(HashTable* hashTable, int id) {
     if (currentRow == NULL) return NULL;
 
     // found
-    if (currentRow->id == id && !currentRow->isRemoved) {
+    if (currentRow->id == id && currentRow->listIndex != -1) {
       return currentRow;
     }
   }
@@ -192,8 +190,7 @@ void removeFromHashTable(HashTable* hashTable, int id) {
 
     // found
     if (currentRow->id == id) {
-      currentRow->listIndex = -1;
-      currentRow->isRemoved = true;
+      currentRow->listIndex = -1; // mark as removed
     }
   }
 }
@@ -302,30 +299,22 @@ void printCache(LRUCache* cache) {
   HashTable* hashTable = cache->hashTable;
   ListNode* list = cache->list;
   
-  printf("table ");
+  printf("Table: ");
   int i;
   for (i = 0; i < hashTable->size; i++) {
     HashRow* row = hashTable->rows[i];
-
     if (row != NULL) {
-      int nodeId = -1;
-      if (row->listIndex != -1) {
-        ListNode* node = getNthNodeFromList(cache->list, row->listIndex); 
-        nodeId = node->data->id;
-      }
-
-      printf("{%d: %d} ", i, nodeId);
+      printf("{%d: @%d} ", i, row->listIndex);
     }
   }
-  printf("\n");
 
-  printf("list ");
+  printf("\nList: ");
   ListNode* node = list;
   i = 0;
   do {
     printf("{%d: #%d} ", i++, node->data->id);
     node = node->next;
-  } while (node && node != list);
+  } while (node != list);
 
   printf("\n");
 }
