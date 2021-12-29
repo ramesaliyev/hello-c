@@ -35,6 +35,7 @@ struct ListNode {
 
 struct HashRow {
   int id;
+  int listIndex;
   ListNode* listNode;
   bool isRemoved;
 };
@@ -87,6 +88,7 @@ HashRow* createHashRow(int id) {
   HashRow* row = (HashRow*) malloc(sizeof(HashRow));
   row->id = id;
   row->listNode = NULL;
+  row->listIndex = -1;
   row->isRemoved = false;
   return row;
 }
@@ -151,7 +153,6 @@ void putIntoHashTable(HashTable* hashTable, HashRow* row) {
 
   // if available row found
   if (i <= hashTable->size) {
-    printf("%d to %d\n", row->id, hash);
     free(hashTable->rows[hash]);
     hashTable->rows[hash] = row;
   }
@@ -171,7 +172,6 @@ HashRow* getFromHashTable(HashTable* hashTable, int id) {
 
     // found
     if (currentRow->id == id && !currentRow->isRemoved) {
-      printf("%d from %d\n", id, hash);
       return currentRow;
     }
   }
@@ -194,9 +194,63 @@ void removeFromHashTable(HashTable* hashTable, int id) {
 
     // found
     if (currentRow->id == id) {
+      currentRow->listIndex = -1;
       currentRow->isRemoved = true;
     }
   }
+}
+
+// Will increase indexes by one.
+// If id specified, will run until the node with id found.
+// If id not specified, will run for the all nodes.
+void updateListIndexes(LRUCache* cache, int id) {
+  ListNode* node = cache->list;
+  int nodeId = node != NULL ? node->data->id : -1;
+  bool cont = nodeId != -1 && nodeId != id;
+
+  while (cont) {
+    // Increase index by one.
+    HashRow* row = getFromHashTable(cache->hashTable, nodeId);
+    row->listIndex++;
+
+    // Next node
+    node = node->next;
+    nodeId = node->data->id;
+
+    // Should continue?
+    cont = id != -1 ? // is id specified?
+      (id != nodeId) : // yes: update until id
+      (node != cache->list); // no: update all list
+  }
+}
+
+ListNode* getNthNodeFromList(ListNode* list, int n) {
+  while(n--) list = list->next;
+  return list;
+}
+
+void makeNodeHead(LRUCache* cache, ListNode* node) {
+  ListNode* head = cache->list;
+
+  // If there is a different head.
+  if (head != NULL && node != head) {
+    ListNode* tail = head->prev;
+
+    // Remove from place if node has prev & next.
+    if (node->prev && node->next) {
+      node->prev->next = node->next;
+      node->next->prev = node->prev;
+    }
+
+    // Put node between head and tail.
+    node->next = head;
+    node->prev = tail;
+    head->prev = node;
+    tail->next = node;
+  }
+
+  // Make node the head.
+  cache->list = node;
 }
 
 void putIntoCache(LRUCache* cache, Data* data) {
@@ -213,22 +267,19 @@ void putIntoCache(LRUCache* cache, Data* data) {
 
     cache->count--;
   }
-  
+
+  // Update all indexes by one.
+  updateListIndexes(cache, -1);
+
   // Create node and place at the top of the list.
   ListNode* node = createListNode(data);
-  if (cache->list != NULL) {
-    node->next = cache->list;
-    node->prev = cache->list->prev;
-    node->next->prev = node;
-    node->prev->next = node;
-  } else {
-    node->prev = node;
-  }
-
-  cache->list = node;  
+  node->prev = node;
+  node->next = node;
+  makeNodeHead(cache, node);  
 
   // Place into hash table.
   HashRow* row = createHashRow(data->id);
+  row->listIndex = 0;
   row->listNode = node;
   putIntoHashTable(cache->hashTable, row);
 
@@ -240,20 +291,11 @@ Data* getFromCache(LRUCache* cache, int id) {
   HashRow* row = getFromHashTable(cache->hashTable, id);
   if (row == NULL) return NULL;
 
-  // If exist, move to the top of the list.
-  ListNode* head = cache->list;
+  // If exist.
   ListNode* node = row->listNode;
-  
-  // take from place.
-  node->prev->next = node->next;
-  node->next->prev = node->prev;
-
-  // put at the head.
-  node->prev = head->prev;
-  node->next = head;
-  head->prev->next = node;
-  head->prev = node;
-  cache->list = node;
+  row->listIndex = 0;
+  updateListIndexes(cache, node->data->id); // update to the left.
+  makeNodeHead(cache, node);
 
   // return the data of the node.
   return node->data;
@@ -270,7 +312,7 @@ void printCache(LRUCache* cache) {
 
     if (row != NULL) {
       Data* data = row->listNode->data;
-      printf("{%d: %d} ", i, row->isRemoved ? -1 : data->id);
+      printf("{%d[%d]: %d} ", i, row->listIndex, row->isRemoved ? -1 : data->id);
     }
   }
   printf("\n");
@@ -306,38 +348,19 @@ int main() {
   getFromCache(cache, 1002);
   printCache(cache);
 
+  printf("\nGet 1002\n");
+  getFromCache(cache, 1002);
+  printCache(cache);
+
   printf("\nPut 1005\n");
-  putIntoCache(cache, createData(1005, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  putIntoCache(cache, createData(1005, "John", "Lock", 20, 8, 1947, "Ireland"));
   printCache(cache);
 
-  printf("\nPut 1006 and 1007\n");
-  putIntoCache(cache, createData(1006, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  putIntoCache(cache, createData(1007, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-
-  printf("\nPut 1008\n");
-  putIntoCache(cache, createData(1008, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-
-  printf("\nPut 1009-1015\n");
-  putIntoCache(cache, createData(1009, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-  putIntoCache(cache, createData(1010, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-  putIntoCache(cache, createData(1011, "BinONBIR", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-  putIntoCache(cache, createData(1012, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-  putIntoCache(cache, createData(1013, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-  putIntoCache(cache, createData(1014, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-  putIntoCache(cache, createData(1015, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
-  printCache(cache);
-
-  Data* data = getFromCache(cache, 1011);
-  printf("Got %s\n", data->name);
-  printCache(cache);
+  putIntoCache(cache, createData(1006, "Gordon", "Freeman", 26, 1, 1967, "Germany"));
+  putIntoCache(cache, createData(1007, "Alyx", "Vance", 27, 2, 1978, "Poland"));
+  putIntoCache(cache, createData(1008, "Frodo", "Baggins", 28, 3, 1989, "Belgium"));
+  putIntoCache(cache, createData(1009, "Gorillaz", "Mate", 29, 4, 1990, "Brazil"));
+  putIntoCache(cache, createData(1010, "Jack", "Daniels", 20, 5, 1907, "Austria"));
 
   return 0;
 }
