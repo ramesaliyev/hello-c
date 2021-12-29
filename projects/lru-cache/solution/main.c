@@ -35,7 +35,6 @@ struct ListNode {
 
 struct HashRow {
   int id;
-  // int nodeOrder;
   ListNode* listNode;
   bool isRemoved;
 };
@@ -47,8 +46,9 @@ struct HashTable {
 
 struct LRUCache {
   int size;
+  int count;
   HashTable* hashTable;
-  ListNode* list;
+  ListNode* list; // head of the linked list.
 };
 
 /**
@@ -74,12 +74,13 @@ LRUCache* createLRUCache(int cacheSize, int hashTableSize) {
   hashTable->rows = (HashRow**) calloc(hashTableSize, sizeof(HashRow*));
   hashTable->size = hashTableSize;
 
-  LRUCache* lruCache = (LRUCache*) malloc(sizeof(LRUCache));
-  lruCache->size = cacheSize;
-  lruCache->hashTable = hashTable;
-  lruCache->list = NULL;
+  LRUCache* cache = (LRUCache*) malloc(sizeof(LRUCache));
+  cache->size = cacheSize;
+  cache->hashTable = hashTable;
+  cache->list = NULL;
+  cache->count = 0;
 
-  return lruCache;
+  return cache;
 }
 
 HashRow* createHashRow(int id) {
@@ -88,6 +89,15 @@ HashRow* createHashRow(int id) {
   row->listNode = NULL;
   row->isRemoved = false;
   return row;
+}
+
+
+ListNode* createListNode(Data* data) {
+  ListNode* listNode = (ListNode*) malloc(sizeof(ListNode));
+  listNode->data = data;
+  listNode->next = NULL;
+  listNode->prev = NULL;
+  return listNode;
 }
 
 Data* createData(int id, char* name, char* sname, int bday, int bmonth, int byear, char* address) {
@@ -189,30 +199,125 @@ void removeFromHashTable(HashTable* hashTable, int id) {
   }
 }
 
-// void cache(LRUCache* lruCache, Data* data) {
+void putIntoCache(LRUCache* cache, Data* data) {
+  // Check if there is place.
+  // If not, remove last used data from cache.
+  if (cache->count >= cache->size) {
+    ListNode* lastNode = cache->list->prev;
+    removeFromHashTable(cache->hashTable, lastNode->data->id);
 
-// }
+    // remove from list.
+    cache->list->prev = lastNode->prev;
+    lastNode->prev->next = cache->list;
+    free(lastNode);
 
-// Data* getDataById(int id) {
+    cache->count--;
+  }
+  
+  // Create node and place at the top of the list.
+  ListNode* node = createListNode(data);
+  if (cache->list != NULL) {
+    node->next = cache->list;
+    node->prev = cache->list->prev;
+    node->next->prev = node;
+    node->prev->next = node;
+  } else {
+    node->prev = node;
+  }
 
-// }
+  cache->list = node;  
+
+  // Place into hash table.
+  HashRow* row = createHashRow(data->id);
+  row->listNode = node;
+  putIntoHashTable(cache->hashTable, row);
+
+  cache->count++;
+}
+
+Data* getFromCache(LRUCache* cache, int id) {
+  // Find through hash table.
+  HashRow* row = getFromHashTable(cache->hashTable, id);
+  if (row == NULL) return NULL;
+
+  // If exist, move to the top of the list.
+  ListNode* head = cache->list;
+  ListNode* node = row->listNode;
+  
+  // take from place.
+  node->prev->next = node->next;
+  node->next->prev = node->prev;
+
+  // put at the head.
+  node->prev = head->prev;
+  node->next = head;
+  head->prev->next = node;
+  head->prev = node;
+  cache->list = node;
+
+  // return the data of the node.
+  return node->data;
+}
+
+void printCache(LRUCache* cache) {
+  HashTable* hashTable = cache->hashTable;
+  ListNode* list = cache->list;
+  
+  printf("table ");
+  int i;
+  for (i = 0; i < hashTable->size; i++) {
+    HashRow* row = hashTable->rows[i];
+
+    if (row != NULL) {
+      Data* data = row->listNode->data;
+      printf("{%d: %d} ", i, row->isRemoved ? -1 : data->id);
+    }
+  }
+  printf("\n");
+
+  printf("list ");
+  ListNode* node = list;
+  i = 0;
+  do {
+    printf("{%d: #%d} ", i++, node->data->id);
+    node = node->next;
+  } while (node && node != list);
+
+  printf("\n");
+}
 
 /**
  * () Main (Entry Point)
  */
 int main() {
-  LRUCache* lruCache = createLRUCache(10, 17);
+  LRUCache* cache = createLRUCache(7, 13);
 
-  // int i;
-  // for (i = 0; i < 17; i++) {
-  //   printf("%d\n", calculateHash(17, i, 12345678));
-  //   putIntoHashTable(lruCache->hashTable, createHashRow(12345678));
-  // }
+  putIntoCache(cache, createData(1001, "Eric", "Cartman", 17, 11, 1917, "Turkey"));
+  putIntoCache(cache, createData(1002, "Sterling", "Archer", 18, 10, 1927, "USA"));
+  putIntoCache(cache, createData(1003, "Philip J.", "Fry", 19, 9, 1937, "England"));
+  putIntoCache(cache, createData(1004, "Peter", "Griffin", 20, 8, 1947, "Ireland"));
+  printCache(cache);
 
-  // cache(lruCache, createData(1001, "Eric", "Cartman", 17, 11, 1917, "Turkey"));
-  // cache(lruCache, createData(1002, "Sterling", "Archer", 18, 10, 1927, "USA"));
-  // cache(lruCache, createData(1003, "Philip J.", "Fry", 19, 9, 1937, "England"));
-  // cache(lruCache, createData(1004, "Peter", "Griffin", 20, 8, 1947, "Ireland"));
+  printf("\nGet 2000\n");
+  getFromCache(cache, 2000);
+  printCache(cache);
+
+  printf("\nGet 1002\n");
+  getFromCache(cache, 1002);
+  printCache(cache);
+
+  printf("\nPut 1005\n");
+  putIntoCache(cache, createData(1005, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+
+  printf("\nPut 1006 and 1007\n");
+  putIntoCache(cache, createData(1006, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  putIntoCache(cache, createData(1007, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
+
+  printf("\nPut 1008\n");
+  putIntoCache(cache, createData(1008, "Leo", "Gunman", 20, 8, 1947, "Ireland"));
+  printCache(cache);
 
   return 0;
 }
