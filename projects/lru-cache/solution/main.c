@@ -199,6 +199,30 @@ void removeFromHashTable(HashTable* hashTable, int id) {
   }
 }
 
+void makeNodeHead(LRUCache* cache, ListNode* node) {
+  ListNode* head = cache->list;
+
+  // If there is a different head.
+  if (head != NULL && node != head) {
+    ListNode* tail = head->prev;
+
+    // Remove from place if node has prev & next.
+    if (node->prev && node->next) {
+      node->prev->next = node->next;
+      node->next->prev = node->prev;
+    }
+
+    // Put node between head and tail.
+    node->next = head;
+    node->prev = tail;
+    head->prev = node;
+    tail->next = node;
+  }
+
+  // Make node the head.
+  cache->list = node;
+}
+
 void putIntoCache(LRUCache* cache, Data* data) {
   // Check if there is place.
   // If not, remove last used data from cache.
@@ -216,16 +240,10 @@ void putIntoCache(LRUCache* cache, Data* data) {
   
   // Create node and place at the top of the list.
   ListNode* node = createListNode(data);
-  if (cache->list != NULL) {
-    node->next = cache->list;
-    node->prev = cache->list->prev;
-    node->next->prev = node;
-    node->prev->next = node;
-  } else {
-    node->prev = node;
-  }
+  node->prev = node;
+  node->next = node;
 
-  cache->list = node;  
+  makeNodeHead(cache, node);
 
   // Place into hash table.
   HashRow* row = createHashRow(data->id);
@@ -240,20 +258,9 @@ Data* getFromCache(LRUCache* cache, int id) {
   HashRow* row = getFromHashTable(cache->hashTable, id);
   if (row == NULL) return NULL;
 
-  // If exist, move to the top of the list.
-  ListNode* head = cache->list;
+  // If exist.
   ListNode* node = row->listNode;
-  
-  // take from place.
-  node->prev->next = node->next;
-  node->next->prev = node->prev;
-
-  // put at the head.
-  node->prev = head->prev;
-  node->next = head;
-  head->prev->next = node;
-  head->prev = node;
-  cache->list = node;
+  makeNodeHead(cache, node);
 
   // return the data of the node.
   return node->data;
@@ -300,6 +307,10 @@ int main() {
 
   printf("\nGet 2000\n");
   getFromCache(cache, 2000);
+  printCache(cache);
+
+  printf("\nGet 1002\n");
+  getFromCache(cache, 1002);
   printCache(cache);
 
   printf("\nGet 1002\n");
