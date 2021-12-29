@@ -36,7 +36,6 @@ struct ListNode {
 struct HashRow {
   int id;
   int listIndex;
-  ListNode* listNode;
   bool isRemoved;
 };
 
@@ -87,7 +86,6 @@ LRUCache* createLRUCache(int cacheSize, int hashTableSize) {
 HashRow* createHashRow(int id) {
   HashRow* row = (HashRow*) malloc(sizeof(HashRow));
   row->id = id;
-  row->listNode = NULL;
   row->listIndex = -1;
   row->isRemoved = false;
   return row;
@@ -280,7 +278,6 @@ void putIntoCache(LRUCache* cache, Data* data) {
   // Place into hash table.
   HashRow* row = createHashRow(data->id);
   row->listIndex = 0;
-  row->listNode = node;
   putIntoHashTable(cache->hashTable, row);
 
   cache->count++;
@@ -292,7 +289,7 @@ Data* getFromCache(LRUCache* cache, int id) {
   if (row == NULL) return NULL;
 
   // If exist.
-  ListNode* node = row->listNode;
+  ListNode* node = getNthNodeFromList(cache->list, row->listIndex);
   row->listIndex = 0;
   updateListIndexes(cache, node->data->id); // update to the left.
   makeNodeHead(cache, node);
@@ -311,8 +308,13 @@ void printCache(LRUCache* cache) {
     HashRow* row = hashTable->rows[i];
 
     if (row != NULL) {
-      Data* data = row->listNode->data;
-      printf("{%d[%d]: %d} ", i, row->listIndex, row->isRemoved ? -1 : data->id);
+      int nodeId = -1;
+      if (row->listIndex != -1) {
+        ListNode* node = getNthNodeFromList(cache->list, row->listIndex); 
+        nodeId = node->data->id;
+      }
+
+      printf("{%d: %d} ", i, nodeId);
     }
   }
   printf("\n");
@@ -356,11 +358,13 @@ int main() {
   putIntoCache(cache, createData(1005, "John", "Lock", 20, 8, 1947, "Ireland"));
   printCache(cache);
 
+  printf("\nPut 1006-10\n");
   putIntoCache(cache, createData(1006, "Gordon", "Freeman", 26, 1, 1967, "Germany"));
   putIntoCache(cache, createData(1007, "Alyx", "Vance", 27, 2, 1978, "Poland"));
   putIntoCache(cache, createData(1008, "Frodo", "Baggins", 28, 3, 1989, "Belgium"));
   putIntoCache(cache, createData(1009, "Gorillaz", "Mate", 29, 4, 1990, "Brazil"));
   putIntoCache(cache, createData(1010, "Jack", "Daniels", 20, 5, 1907, "Austria"));
+  printCache(cache);
 
   return 0;
 }
