@@ -112,7 +112,7 @@ Data* createData(int id, char* name, char* sname, int bday, int bmonth, int byea
 // Calculate hash with polynomial hash function.
 int calculateHash(int m, int i, int key) {
   int p = 31; // some fixed prime value
-  unsigned long int value = 0;
+  unsigned long long int value = 0;
 
   // loop through all digits of key.
   // convert id into value to be hashed.
