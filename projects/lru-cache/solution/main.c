@@ -204,13 +204,14 @@ void makeNodeHead(LRUCache* cache, ListNode* node) {
 
   // If there is a different head.
   if (head != NULL && node != head) {
-    ListNode* tail = head->prev;
-
     // Remove from place if node has prev & next.
     if (node->prev && node->next) {
       node->prev->next = node->next;
       node->next->prev = node->prev;
     }
+    
+    // Got tail.
+    ListNode* tail = head->prev;
 
     // Put node between head and tail.
     node->next = head;

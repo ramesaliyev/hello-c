@@ -244,13 +244,14 @@ void makeNodeHead(LRUCache* cache, ListNode* node) {
 
   // If there is a different head.
   if (head != NULL && node != head) {
-    ListNode* tail = head->prev;
-
     // Remove from place if node has prev & next.
     if (node->prev && node->next) {
       node->prev->next = node->next;
       node->next->prev = node->prev;
     }
+    
+    // Got tail.
+    ListNode* tail = head->prev;
 
     // Put node between head and tail.
     node->next = head;
@@ -450,14 +451,18 @@ int main() {
   int hashtableSize;
   char* filename = mallocstr(LINESIZE);
 
-  printf("Cache size: ");
-  scanf("%d", &cacheSize);
+  cacheSize = 7;
+  hashtableSize = 13;
+  filename = "sample.txt";
 
-  printf("HashTable size: ");
-  scanf("%d", &hashtableSize);
+  // printf("Cache size: ");
+  // scanf("%d", &cacheSize);
 
-  printf("Filename to process: ");
-  scanf("%s", filename);
+  // printf("HashTable size: ");
+  // scanf("%d", &hashtableSize);
+
+  // printf("Filename to process: ");
+  // scanf("%s", filename);
   
   LRUCache* cache = createLRUCache(cacheSize, hashtableSize);
   printf("\nLRU Cache created with Cache Size %d and HashTable Size %d.\n",

@@ -1,0 +1,5 @@
+1 aname asurname 1800 acity
+2 bname bsurname 1801 bcity
+3 cname csurname 1802 ccity
+4 dname dsurname 1803 dcity
+1 aname asurname 1800 acity
