@@ -298,7 +298,7 @@ Data* getFromCache(LRUCache* cache, int id) {
 void printCacheState(LRUCache* cache) {
   HashTable* hashTable = cache->hashTable;
   ListNode* list = cache->list;
-  int i;
+  int i = 0;
 
   // Create separator line.
   int separatorSize = 18 + 10 * hashTable->size;
@@ -317,9 +317,11 @@ void printCacheState(LRUCache* cache) {
       printf("%d", node->data->id);
       node = node->next;
       if (node != list) printf(" -> ");
+      i++;
     }
   } while (node != list);
 
+  if (i == cache->size) printf(" [FULL]");
   printf("\n%s\n", separator);
 
   // Print hash table header.
