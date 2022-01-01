@@ -21,9 +21,7 @@ struct Data {
   int id;
   char* name;
   char* surname;
-  int bday;
-  int bmonth;
-  int byear;
+  int birthyear;
   char* address;
 };
 
@@ -98,14 +96,13 @@ ListNode* createListNode(Data* data) {
   return listNode;
 }
 
-Data* createData(int id, char* name, char* sname, int bday, int bmonth, int byear, char* address) {
+Data* createData(int id, char* name, char* surname, int birthyear, char* address) {
   Data* data = (Data*) malloc(sizeof(Data));
   data->id = id;
   data->name = copystr(name);
-  data->surname = copystr(sname);
-  data->bday = bday;
-  data->bmonth = bmonth;
-  data->byear = byear;
+  data->surname = copystr(surname);
+  data->birthyear = birthyear;
+  data->address = copystr(address);
   return data;
 }
 
@@ -295,65 +292,159 @@ Data* getFromCache(LRUCache* cache, int id) {
   return node->data;
 }
 
-void printCache(LRUCache* cache) {
+/**
+ * () File processing and output.
+ */
+void printCacheState(LRUCache* cache) {
   HashTable* hashTable = cache->hashTable;
   ListNode* list = cache->list;
-  
-  printf("Table: ");
   int i;
+
+  // Create separator line.
+  int separatorSize = 18 + 10 * hashTable->size;
+  char separator[separatorSize];
+  memset(separator, '-', separatorSize - 1);
+  separator[separatorSize - 1] = '\0';
+
+  printf("%s\n", separator);
+
+  // Print nodes of linked list.
+  printf("%-14s |  ", "List Nodes");
+  if (list == NULL) printf("NULL");
+  ListNode* node = list;
+  do {
+    if (node != NULL) {
+      printf("%d", node->data->id);
+      node = node->next;
+      if (node != list) printf(" -> ");
+    }
+  } while (node != list);
+
+  printf("\n%s\n", separator);
+
+  // Print hash table header.
+  printf("%-14s |  ", "HashTable Row");
+  for (i = 0; i < hashTable->size; i++) {
+    printf("%-10d", i);
+  }
+  printf("\n");
+
+  // Print hash table body ids.
+  printf("%-14s |  ", "  Id");
   for (i = 0; i < hashTable->size; i++) {
     HashRow* row = hashTable->rows[i];
     if (row != NULL) {
-      printf("{%d: @%d} ", i, row->listIndex);
+      printf("%-10d", row->id);
+    } else {
+      printf("%-10s", "-");
+    }
+  }
+  printf("\n");
+
+  // Print hash table body listIndexes.
+  printf("%-14s |  ", "  ListIndex");
+  for (i = 0; i < hashTable->size; i++) {
+    HashRow* row = hashTable->rows[i];
+    if (row != NULL) {
+      printf("%-10d", row->listIndex);
+    } else {
+      printf("%-10s", "-");
     }
   }
 
-  printf("\nList: ");
-  ListNode* node = list;
-  i = 0;
-  do {
-    printf("{%d: #%d} ", i++, node->data->id);
-    node = node->next;
-  } while (node != list);
+  printf("\n%s\n", separator);
+}
 
+void processInputFile(LRUCache* cache, char* filename) {
+  FILE* file = fopen(filename, "r");
+  printf("Processing file '%s'...\n", filename);
+
+  if (file == NULL) {
+    printf("Error: Could not read file '%s'\n", filename);
+    return;
+  };
+
+  printf("\nInitial Cache State:\n");
+  printCacheState(cache);
   printf("\n");
+
+  char* line = mallocstr(LINESIZE);
+  int i = 0;
+  int id;
+  char* name;
+  char* surname;
+  int birthyear;
+  char* address;
+
+  // Loop through every line.
+  while (fgets(line, LINESIZE, file)) {
+    line[strcspn(line, "\r\n")] = 0;
+
+    id = atoi(strtok(line, " "));
+
+    printf("LINE #%d | ID: %d\n", ++i, id);
+    Data* data = getFromCache(cache, id);
+    
+    if (data != NULL) {
+      printf("-> Cache HIT! (#%d - %s %s - %d - %s)\n",
+        data->id, data->name, data->surname, data->birthyear, data->address
+      );
+    } else {
+      name = strtok(NULL, " ");
+      surname = strtok(NULL, " ");
+      birthyear = atoi(strtok(NULL, " "));
+      address = strtok(NULL, " ");
+
+      data = createData(id, name, surname, birthyear, address);
+      putIntoCache(cache, data);
+      
+      printf("-> Cache MISS! (#%d - %s %s - %d - %s)\n",
+        data->id, data->name, data->surname, data->birthyear, data->address
+      );
+      printf("-> Entry cached. Current state of cache: \n");
+
+      printCacheState(cache);
+    }
+
+    printf("\n");
+  }
+
+  fclose(file);
+  free(line);
 }
 
 /**
  * () Main (Entry Point)
  */
 int main() {
-  LRUCache* cache = createLRUCache(7, 13);
+  // Print welcome message.
+  printf("Welcome to YTULRU 2021\n");
+  printf("Please provide following inputs.\n");
 
-  putIntoCache(cache, createData(1001, "Eric", "Cartman", 17, 11, 1917, "Turkey"));
-  putIntoCache(cache, createData(1002, "Sterling", "Archer", 18, 10, 1927, "USA"));
-  putIntoCache(cache, createData(1003, "Philip J.", "Fry", 19, 9, 1937, "England"));
-  putIntoCache(cache, createData(1004, "Peter", "Griffin", 20, 8, 1947, "Ireland"));
-  printCache(cache);
+  // Ask for user input.
+  int cacheSize;
+  int hashtableSize;
+  char* filename = mallocstr(LINESIZE);
 
-  printf("\nGet 2000\n");
-  getFromCache(cache, 2000);
-  printCache(cache);
+  cacheSize = 4;
+  hashtableSize = 7;
+  filename = "sample.txt";
 
-  printf("\nGet 1002\n");
-  getFromCache(cache, 1002);
-  printCache(cache);
+  // printf("Cache size: ");
+  // scanf("%d", &cacheSize);
 
-  printf("\nGet 1002\n");
-  getFromCache(cache, 1002);
-  printCache(cache);
+  // printf("HashTable size: ");
+  // scanf("%d", &hashtableSize);
 
-  printf("\nPut 1005\n");
-  putIntoCache(cache, createData(1005, "John", "Lock", 20, 8, 1947, "Ireland"));
-  printCache(cache);
+  // printf("Filename to process: ");
+  // scanf("%s", filename);
+  
+  LRUCache* cache = createLRUCache(cacheSize, hashtableSize);
+  printf("\nLRU Cache created with Cache Size %d and HashTable Size %d.\n",
+    cacheSize, hashtableSize
+  );
 
-  printf("\nPut 1006-10\n");
-  putIntoCache(cache, createData(1006, "Gordon", "Freeman", 26, 1, 1967, "Germany"));
-  putIntoCache(cache, createData(1007, "Alyx", "Vance", 27, 2, 1978, "Poland"));
-  putIntoCache(cache, createData(1008, "Frodo", "Baggins", 28, 3, 1989, "Belgium"));
-  putIntoCache(cache, createData(1009, "Gorillaz", "Mate", 29, 4, 1990, "Brazil"));
-  putIntoCache(cache, createData(1010, "Jack", "Daniels", 20, 5, 1907, "Austria"));
-  printCache(cache);
+  processInputFile(cache, filename);
 
   return 0;
 }
