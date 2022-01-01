@@ -451,18 +451,14 @@ int main() {
   int hashtableSize;
   char* filename = mallocstr(LINESIZE);
 
-  cacheSize = 7;
-  hashtableSize = 13;
-  filename = "sample.txt";
+  printf("Cache size: ");
+  scanf("%d", &cacheSize);
 
-  // printf("Cache size: ");
-  // scanf("%d", &cacheSize);
+  printf("HashTable size: ");
+  scanf("%d", &hashtableSize);
 
-  // printf("HashTable size: ");
-  // scanf("%d", &hashtableSize);
-
-  // printf("Filename to process: ");
-  // scanf("%s", filename);
+  printf("Filename to process: ");
+  scanf("%s", filename);
   
   LRUCache* cache = createLRUCache(cacheSize, hashtableSize);
   printf("\nLRU Cache created with Cache Size %d and HashTable Size %d.\n",
