@@ -232,9 +232,14 @@ void putIntoCache(LRUCache* cache, Data* data) {
     removeFromHashTable(cache->hashTable, lastNode->data->id);
 
     // remove from list.
-    cache->list->prev = lastNode->prev;
-    lastNode->prev->next = cache->list;
-    free(lastNode);
+    if (cache->size == 1) {
+      free(cache->list);
+      cache->list = NULL;
+    } else {
+      cache->list->prev = lastNode->prev;
+      lastNode->prev->next = cache->list;
+      free(lastNode);
+    }
 
     cache->count--;
   }
