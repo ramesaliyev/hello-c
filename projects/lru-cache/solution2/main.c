@@ -4,12 +4,30 @@
 #include <string.h>
 
 /**
- * () Program configuration definitions.
+ * README
+ * 
+ * Please start reading code from Main (Entry Point), 
+ * and go upwards to easily follow solution flow.
+ * 
+ * Code structure:
+ * Search like "(x)" to jump directly to section.
+ * 
+ * (1) Program configuration definitions.
+ * (2) Data types and structures.
+ * (3) Generic helper functions.
+ * (4) Problem solution.
+ * (5) File processing and output.
+ * (6) Main (Entry Point)
+ * 
+ */
+
+/**
+ * (1) Program configuration definitions.
  */
 #define LINESIZE 256
 
 /**
- * () Data types and structures.
+ * (2) Data types and structures.
  */
 typedef struct LRUCache LRUCache;
 typedef struct HashTable HashTable;
@@ -49,7 +67,7 @@ struct LRUCache {
 };
 
 /**
- * () Generic helper functions.
+ * (3) Generic helper functions.
  */
 char* mallocstr(int size) {
   char* str = (char*) malloc((size + 1) * sizeof(char));
@@ -64,7 +82,7 @@ char* copystr(char* str) {
 }
 
 /**
- * () Problem solution.
+ * (4) Problem solution.
  */
 LRUCache* createLRUCache(int cacheSize, int hashTableSize) {
   HashTable* hashTable = (HashTable*) malloc(sizeof(HashTable));
@@ -293,7 +311,7 @@ Data* getFromCache(LRUCache* cache, int id) {
 }
 
 /**
- * () File processing and output.
+ * (5) File processing and output.
  */
 void printCacheState(LRUCache* cache) {
   HashTable* hashTable = cache->hashTable;
@@ -418,7 +436,7 @@ void processInputFile(LRUCache* cache, char* filename) {
 }
 
 /**
- * () Main (Entry Point)
+ * (6) Main (Entry Point)
  */
 int main() {
   // Print welcome message.
