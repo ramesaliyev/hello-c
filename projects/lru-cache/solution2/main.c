@@ -409,6 +409,8 @@ void processInputFile(LRUCache* cache, char* filename) {
       printf("-> Cache HIT! (#%d - %s %s - %d - %s)\n",
         data->id, data->name, data->surname, data->birthyear, data->address
       );
+      printf("-> Entry retrieved. Current state of cache: \n");
+      printCacheState(cache);
     } else {
       name = strtok(NULL, " ");
       surname = strtok(NULL, " ");
